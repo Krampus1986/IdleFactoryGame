@@ -1,212 +1,132 @@
-// bottles.js — Bottle size module for Coke Tycoon Idle
 (function () {
-  "use strict";
+  if (!window.CokeExt || typeof window.CokeExt.register !== "function") return;
 
-  // Ensure global extension namespace
-  window.CokeExt = window.CokeExt || {};
-  const Ext = window.CokeExt;
-
-  // --- Small helpers (local, so we don't depend on game.js internals) ---
-
-  function D(id) {
-    return document.getElementById(id);
-  }
-
-  function formatMoney(v) {
-    return "$" + v.toFixed(2);
-  }
-
-  function pushLogLocal(text, type) {
-    const logBox = D("logBox");
-    if (!logBox) return;
-    const entry = document.createElement("div");
-    entry.className =
-      "log-entry" +
-      (type === "good" ? " good" : type === "bad" ? " bad" : "");
-    entry.textContent = text;
-    logBox.prepend(entry);
-    while (logBox.childElementCount > 60) {
-      logBox.removeChild(logBox.lastElementChild);
-    }
-  }
-
-  // --- Bottle size definitions ---
-
-  const bottleSizeDefs = [
-    {
-      id: "size_033",
-      name: "0.33 L",
-      label: "0.33 L (mini)",
-      basePrice: 1.60
-    },
-    {
-      id: "size_050",
-      name: "0.50 L",
-      label: "0.50 L (standard)",
-      basePrice: 2.00
-    },
-    {
-      id: "size_150",
-      name: "1.50 L",
-      label: "1.50 L (family)",
-      basePrice: 2.80
-    }
-  ];
-
-  // --- State helpers ---
-
-  function ensureBottleState(state) {
-    if (!state.bottles) {
-      const defaultId = "size_050";
-      const sizes = {};
-      bottleSizeDefs.forEach(def => {
-        sizes[def.id] = {
-          unlocked: true,
-          basePrice: def.basePrice
+  const handler = {
+    onInit(api) {
+      const state = api.getState();
+      if (!state.ext) state.ext = {};
+      if (!state.ext.bottles) {
+        const defs = {
+          small_500: {
+            id: "small_500",
+            label: "0.5L On-the-go",
+            priceMult: 0.85,
+            capacityMult: 1.1,
+            note: "Cheaper, high volume. Great for kiosks."
+          },
+          medium_1000: {
+            id: "medium_1000",
+            label: "1.0L Standard",
+            priceMult: 1.0,
+            capacityMult: 1.0,
+            note: "Balanced line speed vs. margin."
+          },
+          family_1500: {
+            id: "family_1500",
+            label: "1.5L Family Pack",
+            priceMult: 1.25,
+            capacityMult: 0.9,
+            note: "Higher price, slightly slower handling."
+          }
         };
+
+        state.ext.bottles = {
+          activeId: "medium_1000",
+          defs
+        };
+
+        const { flavorDefs, BASE_MARKET_PRICE } = api.constants;
+        flavorDefs.forEach(fd => {
+          const fs = state.flavors[fd.id];
+          if (!fs) return;
+          const base = fd.basePrice || BASE_MARKET_PRICE;
+          const active = defs["medium_1000"];
+          fs.price = base * active.priceMult;
+        });
+      }
+    },
+
+    onBindEvents(api) {
+      const row = api.D("bottleRow");
+      if (!row) return;
+
+      row.addEventListener("click", e => {
+        const btn = e.target.closest("[data-bottle-id]");
+        if (!btn) return;
+        const id = btn.getAttribute("data-bottle-id");
+        const state = api.getState();
+        const bottles = state.ext && state.ext.bottles;
+        if (!bottles || !bottles.defs[id]) return;
+
+        bottles.activeId = id;
+
+        const { flavorDefs, BASE_MARKET_PRICE } = api.constants;
+        const defBottle = bottles.defs[id];
+
+        flavorDefs.forEach(fd => {
+          const fs = state.flavors[fd.id];
+          if (!fs) return;
+          const base = fd.basePrice || BASE_MARKET_PRICE;
+          fs.price = base * defBottle.priceMult;
+        });
+
+        api.pushLog("Switched bottle format to " + defBottle.label + ".", "good");
+      });
+    },
+
+    onAfterTick(api) {
+      const state = api.getState();
+      if (!state.ext || !state.ext.bottles) return;
+      const active = state.ext.bottles.defs[state.ext.bottles.activeId];
+      if (!active) return;
+
+      // Softly nudge capacity according to bottle type (once per tick)
+      const baseCap = api.constants.BASE_CAPACITY_PER_LINE;
+      const baseLines = state.meta && state.meta.lines ? state.meta.lines : 1;
+      const expected = Math.round(baseCap * baseLines * active.capacityMult);
+      if (state.capacityPerHour < expected) {
+        state.capacityPerHour = expected;
+      }
+    },
+
+    onUpdateUI(api) {
+      const state = api.getState();
+      if (!state.ext || !state.ext.bottles) return;
+      const row = api.D("bottleRow");
+      const noteEl = api.D("bottleNote");
+      if (!row) return;
+
+      const bottles = state.ext.bottles;
+      row.innerHTML = "";
+
+      Object.keys(bottles.defs).forEach(id => {
+        const def = bottles.defs[id];
+        const btn = document.createElement("button");
+        btn.type = "button";
+        btn.className =
+          "flavor-pill bottle-pill" +
+          (bottles.activeId === id ? " active" : "");
+        btn.setAttribute("data-bottle-id", id);
+
+        const dot = document.createElement("span");
+        dot.className = "dot";
+        btn.appendChild(dot);
+
+        const label = document.createElement("span");
+        label.textContent = def.label;
+        btn.appendChild(label);
+
+        row.appendChild(btn);
       });
 
-      state.bottles = {
-        activeSizeId: defaultId,
-        sizes
-      };
-
-      // Set starting price from default bottle size
-      const activeDef = bottleSizeDefs.find(b => b.id === defaultId);
-      if (activeDef) {
-        state.pricePerBottle = activeDef.basePrice;
-        if (state.flavors && state.flavors[state.activeFlavorId]) {
-          state.flavors[state.activeFlavorId].price = activeDef.basePrice;
+      if (noteEl) {
+        const active = bottles.defs[bottles.activeId];
+        if (active) {
+          noteEl.textContent = active.note;
         }
       }
     }
-  }
-
-  // Attach UI container once into Production card
-  let bottleUIAttached = false;
-
-  function attachBottleUIOnce() {
-    if (bottleUIAttached) return;
-    const productionCardBody = document.querySelector(
-      'section[aria-labelledby="productionTitle"] .card-body'
-    );
-    if (!productionCardBody) return;
-
-    const block = document.createElement("div");
-
-    const heading = document.createElement("div");
-    heading.className = "subheading";
-    heading.textContent = "Bottle size";
-    block.appendChild(heading);
-
-    const row = document.createElement("div");
-    row.className = "flavors-row";
-    row.id = "bottleSizesRow";
-    block.appendChild(row);
-
-    // Insert before the last section in the production card (Automation)
-    productionCardBody.insertBefore(
-      block,
-      productionCardBody.lastElementChild
-    );
-
-    bottleUIAttached = true;
-  }
-
-  // Render size pills
-  function renderBottleSizes(state) {
-    const row = D("bottleSizesRow");
-    if (!row || !state.bottles) return;
-
-    row.innerHTML = "";
-
-    bottleSizeDefs.forEach(def => {
-      const sizeState = state.bottles.sizes[def.id];
-      const isActive = state.bottles.activeSizeId === def.id;
-
-      const pill = document.createElement("button");
-      pill.type = "button";
-      pill.className = "flavor-pill";
-      if (isActive) pill.className += " active";
-
-      const dot = document.createElement("span");
-      dot.className = "dot";
-      pill.appendChild(dot);
-
-      const label = document.createElement("span");
-      const price =
-        (sizeState && typeof sizeState.basePrice === "number")
-          ? sizeState.basePrice
-          : def.basePrice;
-      label.textContent = def.label + " • " + formatMoney(price);
-      pill.appendChild(label);
-
-      pill.addEventListener("click", () => {
-        const s = Ext.getState && Ext.getState();
-        if (!s) return;
-
-        ensureBottleState(s);
-
-        s.bottles.activeSizeId = def.id;
-
-        // Recommended price from size
-        const newPrice = price;
-
-        // Set active flavor price + global bottle price
-        if (s.flavors && s.flavors[s.activeFlavorId]) {
-          s.flavors[s.activeFlavorId].price = newPrice;
-        }
-        s.pricePerBottle = newPrice;
-
-        // Update key price UI directly so it reacts immediately
-        const priceEl = D("priceDisplay");
-        if (priceEl) priceEl.textContent = formatMoney(newPrice);
-
-        const slider = D("priceSlider");
-        if (slider && slider !== document.activeElement) {
-          slider.value = newPrice.toFixed(2);
-        }
-
-        renderBottleSizes(s);
-
-        pushLogLocal(
-          "Switched to " + def.name + " bottles. Recommended price set to " +
-            formatMoney(newPrice) + ".",
-          "good"
-        );
-      });
-
-      row.appendChild(pill);
-    });
-  }
-
-  // --- Hook into CokeExt lifecycle ---
-
-  const prevOnInit = Ext.onInit;
-  Ext.onInit = function (state) {
-    if (typeof prevOnInit === "function") prevOnInit(state);
-    ensureBottleState(state);
-    attachBottleUIOnce();
   };
 
-  const prevOnUpdateUI = Ext.onUpdateUI;
-  Ext.onUpdateUI = function (state) {
-    if (typeof prevOnUpdateUI === "function") prevOnUpdateUI(state);
-    ensureBottleState(state);
-    renderBottleSizes(state);
-  };
-
-  const prevOnBindEvents = Ext.onBindEvents;
-  Ext.onBindEvents = function (state) {
-    if (typeof prevOnBindEvents === "function") prevOnBindEvents(state);
-    // no extra global events needed; pills handle their own clicks
-  };
-
-  // You can also hook onTick later if you want size-based demand/capacity
-  // const prevOnTick = Ext.onTick;
-  // Ext.onTick = function (state) {
-  //   if (typeof prevOnTick === "function") prevOnTick(state);
-  //   // e.g. adjust demand or cost based on active bottle size
-  // };
-
+  window.CokeExt.register(handler);
 })();
