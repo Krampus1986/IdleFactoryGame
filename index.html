@@ -23,6 +23,35 @@
     </symbol>
   </svg>
 
+  <!-- Global event / recap popup -->
+  <div
+    class="event-popup hidden info"
+    id="eventPopup"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="eventPopupTitle"
+  >
+    <div class="event-dialog">
+      <button
+        class="event-close"
+        id="eventPopupClose"
+        type="button"
+        aria-label="Close event message"
+      >
+        ×
+      </button>
+      <div class="event-title" id="eventPopupTitle">Event</div>
+      <div class="event-body" id="eventPopupText">
+        <!-- filled by JS -->
+      </div>
+      <div class="event-actions">
+        <button class="btn primary" type="button" id="eventPopupOk">
+          Okay
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="app">
     <header class="topbar">
       <div class="brand-chunk" aria-label="Coke Tycoon Idle header">
@@ -33,7 +62,9 @@
         </div>
         <div class="brand-text">
           <div class="brand-title">Coke Tycoon Idle</div>
-          <div class="brand-sub">Buy preforms, build bottling lines, win the shelf war.</div>
+          <div class="brand-sub">
+            Buy preforms, build bottling lines, win the shelf war.
+          </div>
         </div>
       </div>
       <div class="top-stats">
@@ -59,9 +90,7 @@
             <small>Brand legacy</small>
           </div>
         </div>
-      </div>
-      <div class="topbar-actions">
-        <button class="btn ghost" id="resetGameButton">
+        <button class="btn ghost" id="newGameButton" type="button">
           New game
         </button>
       </div>
@@ -103,18 +132,6 @@
             </div>
 
             <div>
-              <div class="subheading">Bottle format</div>
-              <div class="flavors-row" id="bottleRow">
-                <!-- filled by bottles.js -->
-              </div>
-              <div class="badge-row">
-                <span class="badge" id="bottleNote">
-                  Choose a format to tune price vs. line speed.
-                </span>
-              </div>
-            </div>
-
-            <div>
               <div class="subheading">Inventory</div>
               <div class="inventory-grid" id="inventoryGrid">
                 <div class="chip">
@@ -125,10 +142,10 @@
                   <div class="chip-sub">
                     <span>Raw PET for bottles.</span>
                     <div>
-                      <button class="btn primary" data-buy="preforms" data-amount="50">
+                      <button class="btn primary" data-buy="preforms" data-amount="50" type="button">
                         +50
                       </button>
-                      <button class="btn ghost" data-buy="preforms" data-amount="200">
+                      <button class="btn ghost" data-buy="preforms" data-amount="200" type="button">
                         +200
                       </button>
                     </div>
@@ -142,10 +159,10 @@
                   <div class="chip-sub">
                     <span>Brand sleeves.</span>
                     <div>
-                      <button class="btn primary" data-buy="labels" data-amount="50">
+                      <button class="btn primary" data-buy="labels" data-amount="50" type="button">
                         +50
                       </button>
-                      <button class="btn ghost" data-buy="labels" data-amount="200">
+                      <button class="btn ghost" data-buy="labels" data-amount="200" type="button">
                         +200
                       </button>
                     </div>
@@ -159,10 +176,10 @@
                   <div class="chip-sub">
                     <span>Trays & shrink-wrap.</span>
                     <div>
-                      <button class="btn primary" data-buy="packaging" data-amount="50">
+                      <button class="btn primary" data-buy="packaging" data-amount="50" type="button">
                         +50
                       </button>
-                      <button class="btn ghost" data-buy="packaging" data-amount="200">
+                      <button class="btn ghost" data-buy="packaging" data-amount="200" type="button">
                         +200
                       </button>
                     </div>
@@ -171,10 +188,11 @@
                 <div class="chip">
                   <div class="chip-main">
                     <strong>Finished bottles</strong>
-                    <span id="invBottles">0</span>
+                    <span id="invBottles">0 / 300</span>
                   </div>
                   <div class="chip-sub">
-                    <span>Ready to ship (current SKU).</span>
+                    <span class="badge" id="demandHint">Demand: calm</span>
+                    <span>Ready to ship.</span>
                   </div>
                 </div>
               </div>
@@ -227,7 +245,9 @@
                   </div>
                 </div>
                 <div class="range-wrap">
-                  <label for="priceSlider">Drag to adjust price (higher = more margin, lower = more demand).</label>
+                  <label for="priceSlider">
+                    Drag to adjust price (higher = more margin, lower = more demand).
+                  </label>
                   <input id="priceSlider" type="range" min="0.5" max="5" step="0.05" />
                 </div>
               </div>
@@ -242,20 +262,17 @@
                 </div>
                 <div class="stat">
                   <span class="label">Market share</span>
-                  <span class="value" id="marketShareDisplay">0%</span>
+                  <span class="value" id="marketShareDisplay">100%</span>
                 </div>
                 <div class="stat">
                   <span class="label">Rival price</span>
-                  <span class="value" id="rivalPriceDisplay">$0.00</span>
+                  <span class="value" id="rivalPriceDisplay">–</span>
                 </div>
-              </div>
-              <div class="badge-row" style="margin-top:6px">
-                <span class="badge" id="demandHint">Demand: calm</span>
               </div>
             </div>
 
             <div>
-              <div class="subheading">Financials (lifetime)</div>
+              <div class="subheading">Lifetime finances</div>
               <div class="stat-row">
                 <div class="stat">
                   <span class="label">Bottles sold</span>
@@ -270,35 +287,6 @@
                   <span class="value" id="expensesDisplay">$0.00</span>
                 </div>
               </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Equipment & Promotions -->
-        <section class="card" aria-labelledby="equipmentTitle">
-          <div class="card-header">
-            <div class="card-title" id="equipmentTitle">
-              Equipment & Promotions
-            </div>
-            <div class="card-pill">
-              Line tuning & field gear
-            </div>
-          </div>
-          <div class="card-body">
-            <div class="subheading">Production equipment</div>
-            <div class="equipment-list" id="equipmentList">
-              <!-- filled by equipment.js -->
-            </div>
-
-            <div class="subheading" style="margin-top:10px">Promotional gear</div>
-            <div class="equipment-list" id="promoList">
-              <!-- filled by equipment.js -->
-            </div>
-
-            <div class="badge-row" style="margin-top:8px">
-              <span class="badge" id="equipmentSummary">
-                No special equipment installed yet.
-              </span>
             </div>
           </div>
         </section>
@@ -335,21 +323,24 @@
                     Earn $250,000 total revenue to unlock Brand Legacy.
                   </span>
                 </div>
-                <button class="btn danger" id="prestigeButton" disabled>
+                <button class="btn danger" id="prestigeButton" disabled type="button">
                   Rebrand & restart
                 </button>
               </div>
             </div>
 
             <div>
-              <div class="subheading">Prestige upgrades</div>
-              <div class="badge-row" style="margin-bottom:4px">
-                <span class="badge" id="prestigePointsInfo">
-                  Prestige points: 0 • Legacy level: x1.0
-                </span>
+              <div class="subheading">Adventures</div>
+              <div class="chip" id="adventureBox">
+                <div class="chip-main">
+                  <strong>No active campaign</strong>
+                  <span>Equip your factory with a campaign to boost growth.</span>
+                </div>
               </div>
-              <div class="equipment-list" id="prestigeUpgradesList">
-                <!-- filled by prestige_ext.js -->
+              <div style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;">
+                <button class="btn ghost" id="adventureStartStadium" type="button">
+                  Launch stadium promotion
+                </button>
               </div>
             </div>
 
@@ -362,57 +353,7 @@
           </div>
         </section>
 
-        <!-- Adventures & Campaigns -->
-        <section class="card" aria-labelledby="adventureTitle">
-          <div class="card-header">
-            <div class="card-title" id="adventureTitle">
-              Adventures & Campaigns
-            </div>
-            <div class="card-pill">
-              Field promotions (RPG-style)
-            </div>
-          </div>
-          <div class="card-body">
-            <div>
-              <div class="subheading">Current campaign</div>
-              <div class="chip" id="adventureBox">
-                <!-- filled by game.js -->
-              </div>
-              <div class="badge-row" style="margin-top:6px">
-                <button class="btn primary" id="adventureStartStadium">
-                  Stadium promo (quick)
-                </button>
-              </div>
-            </div>
-
-            <div>
-              <div class="subheading">Special adventures</div>
-              <div class="equipment-list" id="extraAdventuresList">
-                <!-- filled by adventures_rpg.js -->
-              </div>
-            </div>
-          </div>
-        </section>
-
-        <!-- Rival Intelligence -->
-        <section class="card" aria-labelledby="rivalTitle">
-          <div class="card-header">
-            <div class="card-title" id="rivalTitle">
-              Rival Intelligence
-            </div>
-            <div class="card-pill">
-              Competitor AI minds
-            </div>
-          </div>
-          <div class="card-body">
-            <div class="subheading">Rival portfolio</div>
-            <div class="equipment-list" id="rivalList">
-              <!-- filled by rivals.js -->
-            </div>
-          </div>
-        </section>
-
-        <!-- Log -->
+        <!-- Board Feed -->
         <section class="card" aria-labelledby="logTitle">
           <div class="card-header">
             <div class="card-title" id="logTitle">
@@ -434,35 +375,6 @@
     </main>
   </div>
 
-  <!-- Modal for events / adventures / monthly recap -->
-  <div id="eventOverlay" class="modal-overlay hidden">
-    <div id="eventPopup" class="modal hidden" role="dialog" aria-modal="true" aria-labelledby="eventTitle">
-      <div class="modal-header">
-        <div>
-          <h2 id="eventTitle">Event</h2>
-          <span class="modal-tag" id="eventTag">event</span>
-        </div>
-        <button class="modal-close" id="eventPopupClose" aria-label="Close">
-          ✕
-        </button>
-      </div>
-      <div class="modal-body">
-        <p id="eventBody">
-          Event text
-        </p>
-      </div>
-      <div class="modal-footer">
-        <button class="btn ghost" id="eventDismiss">Dismiss</button>
-        <button class="btn primary" id="eventAcknowledge">OK</button>
-      </div>
-    </div>
-  </div>
-
   <script src="game.js"></script>
-  <script src="bottles.js"></script>
-  <script src="equipment.js"></script>
-  <script src="rivals.js"></script>
-  <script src="adventures_rpg.js"></script>
-  <script src="prestige_ext.js"></script>
 </body>
 </html>
