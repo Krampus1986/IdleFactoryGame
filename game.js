@@ -17,7 +17,7 @@
   const BASE_STORAGE_CAPACITY = 300;
   const BASE_FIXED_COST_PER_HOUR = 15;
 
-  // Flavors: base price and demand multiplier
+  // Flavors: now include basePrice and demand multiplier
   const flavorDefs = [
     {
       id: "classic",
@@ -59,8 +59,7 @@
       maxHours: 18,
       capacityMult: 0.2,
       demandMult: 1.0,
-      extraCostPerHour: 10,
-      tag: "operations"
+      extraCostPerHour: 10
     },
     inventory_full: {
       id: "inventory_full",
@@ -70,8 +69,7 @@
       maxHours: 12,
       capacityMult: 0.0,
       demandMult: 1.0,
-      extraCostPerHour: 5,
-      tag: "logistics"
+      extraCostPerHour: 5
     },
     heatwave: {
       id: "heatwave",
@@ -81,8 +79,7 @@
       maxHours: 18,
       capacityMult: 1.0,
       demandMult: 1.5,
-      extraCostPerHour: 0,
-      tag: "market"
+      extraCostPerHour: 0
     }
   };
 
@@ -226,7 +223,6 @@
     }
   ];
 
-  // Simple adventure system (stadium + extendable from plugins)
   const adventureDefs = [
     {
       id: "stadium_promo",
@@ -238,38 +234,10 @@
     }
   ];
 
-  // --- Plugin / extension bus so we can split features into separate JS files ---
-
-  const pluginBus = {
-    init: [],
-    afterTick: [],
-    updateUI: [],
-    bindEvents: []
-  };
-
-  // Expose global extension registry
-  (function setupExtensionRegistry() {
-    const ext = window.CokeExt || {};
-    if (!ext._pluginBus) {
-      ext._pluginBus = pluginBus;
-      ext.register = function register(handler) {
-        if (!handler) return;
-        if (typeof handler.onInit === "function") pluginBus.init.push(handler.onInit);
-        if (typeof handler.onAfterTick === "function")
-          pluginBus.afterTick.push(handler.onAfterTick);
-        if (typeof handler.onUpdateUI === "function")
-          pluginBus.updateUI.push(handler.onUpdateUI);
-        if (typeof handler.onBindEvents === "function")
-          pluginBus.bindEvents.push(handler.onBindEvents);
-      };
-    }
-    window.CokeExt = ext;
-  })();
-
-  // --- State & helpers ---
-
   let state;
   let tickHandle = null;
+
+  // --- Helpers ---
 
   function clamp(min, max, v) {
     return Math.min(max, Math.max(min, v));
@@ -281,6 +249,10 @@
 
   function formatMoney(v) {
     return "$" + v.toFixed(2);
+  }
+
+  function unlockedFlavorCount(s) {
+    return Object.values(s.flavors || {}).filter(f => f.unlocked).length;
   }
 
   function currentMonthIndex() {
@@ -302,35 +274,6 @@
     const eventMult =
       (state.events.active && state.events.active.demandMult) || 1.0;
     return state.demandModifier * eventMult;
-  }
-
-  // Build plugin API object for external modules
-  function buildPluginAPI() {
-    return {
-      getState: () => state,
-      setState: newState => {
-        state = newState;
-      },
-      pushLog,
-      D,
-      clamp,
-      formatMoney,
-      constants: {
-        SUPPLY_COST,
-        BASE_MARKET_PRICE,
-        BASE_CAPACITY_PER_LINE,
-        BASE_STORAGE_CAPACITY,
-        BASE_FIXED_COST_PER_HOUR,
-        flavorDefs,
-        adventureDefs
-      },
-      actions: {
-        startGlobalEvent,
-        endGlobalEvent,
-        startAdventure,
-        hardResetGame
-      }
-    };
   }
 
   // --- State & persistence ---
@@ -415,10 +358,6 @@
       },
       purchasedUpgrades: {},
       unlockedAchievements: {},
-
-      // extension space – modules can hang their own stuff here
-      ext: {},
-
       lastTick: Date.now()
     };
   }
@@ -468,9 +407,6 @@
       }
       if (!state.purchasedUpgrades) {
         state.purchasedUpgrades = {};
-      }
-      if (!state.ext) {
-        state.ext = {};
       }
 
       // Ensure flavors are fully shaped
@@ -527,34 +463,31 @@
     }
   }
 
-  // --- Popup / event modal ---
-
-  function showEventPopup(title, text, tag) {
-    const wrap = D("eventPopup");
-    const overlay = D("eventOverlay");
-    const t = D("eventTitle");
-    const b = D("eventBody");
-    const tagEl = D("eventTag");
-    if (t) t.textContent = title || "";
-    if (b) b.textContent = text || "";
-    if (tagEl) tagEl.textContent = tag || "";
-    if (wrap) wrap.classList.remove("hidden");
-    if (overlay) overlay.classList.remove("hidden");
-  }
-
-  function hideEventPopup() {
-    const wrap = D("eventPopup");
-    const overlay = D("eventOverlay");
-    if (wrap) wrap.classList.add("hidden");
-    if (overlay) overlay.classList.add("hidden");
-  }
-
-  // --- Global events ---
+  // --- Global events / popup ---
 
   function hoursForEvent(def) {
     const min = def.minHours;
     const max = def.maxHours;
     return min + Math.floor(Math.random() * (max - min + 1));
+  }
+
+  function showEventPopup(title, text, type = "info") {
+    const wrap = D("eventPopup");
+    if (!wrap) return;
+    const titleEl = D("eventTitle");
+    const bodyEl = D("eventBody");
+
+    wrap.classList.remove("hidden", "info", "good", "bad");
+    wrap.classList.add(type);
+
+    if (titleEl) titleEl.textContent = title;
+    if (bodyEl) bodyEl.textContent = text;
+  }
+
+  function hideEventPopup() {
+    const wrap = D("eventPopup");
+    if (!wrap) return;
+    wrap.classList.add("hidden");
   }
 
   function startGlobalEvent(id, options = {}) {
@@ -572,25 +505,18 @@
       remainingHours: duration,
       capacityMult: def.capacityMult,
       demandMult: def.demandMult,
-      extraCostPerHour: def.extraCostPerHour,
-      tag: def.tag || "event"
+      extraCostPerHour: def.extraCostPerHour
     };
 
-    showEventPopup(
-      def.name,
-      def.desc + " (est. " + duration + "h)",
-      def.tag || "event"
-    );
+    showEventPopup(def.name, def.desc + " (est. " + duration + "h)", "bad");
     pushLog("Global event started: " + def.name + ".", "bad");
   }
 
   function endGlobalEvent() {
     if (!state.events.active) return;
-    pushLog(
-      "Global event ended: " + state.events.active.name + ".",
-      "good"
-    );
+    pushLog("Global event ended: " + state.events.active.name + ".", "good");
     state.events.active = null;
+    hideEventPopup();
   }
 
   function updateGlobalEvent() {
@@ -635,6 +561,14 @@
     state.adventure.remainingHours = def.durationHours;
     state.adventure.rewardPending = def.reward;
     pushLog("Adventure started: " + def.name + ".", "good");
+    showEventPopup(
+      def.name,
+      def.desc +
+        " You deployed " +
+        def.minBottlesRequired +
+        " bottles into the field.",
+      "info"
+    );
   }
 
   function updateAdventure() {
@@ -655,7 +589,7 @@
       showEventPopup(
         "Adventure complete",
         name + " finished. Rewards applied to your brand.",
-        "adventure"
+        "good"
       );
       pushLog("Adventure completed: " + name + ".", "good");
       state.adventure.activeId = null;
@@ -717,7 +651,7 @@
         ", profit " +
         formatMoney(profit) +
         ".";
-      showEventPopup("Monthly Recap", msg, profit >= 0 ? "board" : "warning");
+      showEventPopup("Monthly Recap", msg, profit >= 0 ? "good" : "bad");
       pushLog(msg, profit >= 0 ? "good" : "bad");
 
       state.monthly = { produced: 0, sold: 0, revenue: 0, expenses: 0 };
@@ -749,19 +683,6 @@
     checkAchievements();
     maybeHandleMonthEnd();
 
-    // Plugin hook: after each tick
-    const api = buildPluginAPI();
-    const bus = window.CokeExt && window.CokeExt._pluginBus;
-    if (bus && bus.afterTick.length) {
-      bus.afterTick.forEach(fn => {
-        try {
-          fn(api);
-        } catch (err) {
-          console.warn("CokeExt onAfterTick error:", err);
-        }
-      });
-    }
-
     if (online) {
       state.lastTick = Date.now();
     }
@@ -774,11 +695,7 @@
       state.day += 1;
       if (state.rival.active) {
         const drift = (Math.random() - 0.5) * 0.4;
-        state.rival.price = clamp(
-          1.2,
-          5.0,
-          state.rival.price + drift
-        );
+        state.rival.price = clamp(1.2, 5.0, state.rival.price + drift);
       }
     }
   }
@@ -950,8 +867,7 @@
       if (totalScore <= 0.01) {
         yourDemand = baseDemand * randomFactor;
       } else {
-        yourDemand =
-          (baseDemand * (playerScore / totalScore)) * randomFactor;
+        yourDemand = (baseDemand * (playerScore / totalScore)) * randomFactor;
       }
 
       const demandRounded = Math.max(0, Math.round(yourDemand));
@@ -1009,7 +925,7 @@
       state.monthly.revenue += totalRevenue;
     }
 
-    // Approximate "market price"
+    // Update global "market price" approximation
     state.marketPrice = BASE_MARKET_PRICE;
 
     return { sold: totalSold, demanded: totalDesired, marketShare };
@@ -1099,8 +1015,7 @@
       const pill = document.createElement("button");
       pill.type = "button";
       pill.className =
-        "flavor-pill" +
-        (def.id === state.activeFlavorId ? " active" : "");
+        "flavor-pill" + (def.id === state.activeFlavorId ? " active" : "");
       if (!flavorState || !flavorState.unlocked) {
         pill.className += " locked";
       }
@@ -1292,6 +1207,15 @@
       : "Rivals: sleeping";
     const rivalEl = D("rivalStatus");
     if (rivalEl) rivalEl.textContent = rivalStatus;
+
+    const demandHint = D("demandHint");
+    if (demandHint) {
+      let label = "Demand: calm";
+      if (state.lastDemandLevel > 80) label = "Demand: surging";
+      else if (state.lastDemandLevel > 40) label = "Demand: steady";
+      else if (state.lastDemandLevel < 10) label = "Demand: weak";
+      demandHint.textContent = label;
+    }
   }
 
   function updateMarketUI() {
@@ -1379,34 +1303,6 @@
     renderUpgrades();
     renderAchievements();
     renderAdventureUI();
-
-    // Plugin hook: let external modules update their UI pieces
-    const api = buildPluginAPI();
-    const bus = window.CokeExt && window.CokeExt._pluginBus;
-    if (bus && bus.updateUI.length) {
-      bus.updateUI.forEach(fn => {
-        try {
-          fn(api);
-        } catch (err) {
-          console.warn("CokeExt onUpdateUI error:", err);
-        }
-      });
-    }
-  }
-
-  // --- New Game / hard reset ---
-
-  function hardResetGame() {
-    const sure = confirm(
-      "Start a completely new game? This will erase your save and restart from Day 1."
-    );
-    if (!sure) return;
-    localStorage.removeItem("cokeIdleSave");
-    state = defaultState();
-    state.lastTick = Date.now();
-    pushLog("New game started. All progress reset.", "bad");
-    updateUI();
-    saveGame();
   }
 
   // --- Event wiring & loop ---
@@ -1459,31 +1355,34 @@
       });
     }
 
-    // Popup close / overlay
-    const popupClose = D("eventPopupClose");
-    if (popupClose) {
-      popupClose.addEventListener("click", () => {
-        hideEventPopup();
-      });
-    }
-    const popupDismiss = D("eventDismiss");
-    if (popupDismiss) {
-      popupDismiss.addEventListener("click", () => {
-        hideEventPopup();
-      });
-    }
-    const popupOk = D("eventAcknowledge");
-    if (popupOk) {
-      popupOk.addEventListener("click", () => {
-        hideEventPopup();
-      });
-    }
-    const overlay = D("eventOverlay");
-    if (overlay) {
-      overlay.addEventListener("click", e => {
-        if (e.target === overlay) {
+    const popup = D("eventPopup");
+    const dismiss = D("eventDismiss");
+    const ack = D("eventAcknowledge");
+    const closeX = D("eventPopupClose");
+
+    if (popup) {
+      popup.addEventListener("click", e => {
+        if (e.target === popup) {
           hideEventPopup();
         }
+      });
+    }
+
+    if (dismiss) {
+      dismiss.addEventListener("click", () => {
+        hideEventPopup();
+      });
+    }
+
+    if (ack) {
+      ack.addEventListener("click", () => {
+        hideEventPopup();
+      });
+    }
+
+    if (closeX) {
+      closeX.addEventListener("click", () => {
+        hideEventPopup();
       });
     }
 
@@ -1496,23 +1395,22 @@
       });
     }
 
-    const resetBtn = D("resetGameButton");
-    if (resetBtn) {
-      resetBtn.addEventListener("click", () => {
-        hardResetGame();
-      });
-    }
-
-    // Plugin hook: let external modules attach their own DOM events
-    const api = buildPluginAPI();
-    const bus = window.CokeExt && window.CokeExt._pluginBus;
-    if (bus && bus.bindEvents.length) {
-      bus.bindEvents.forEach(fn => {
+    const newGameBtn = D("newGameButton");
+    if (newGameBtn) {
+      newGameBtn.addEventListener("click", () => {
+        const sure = confirm(
+          "Start a new game? This will wipe your current factory and reset all progress."
+        );
+        if (!sure) return;
         try {
-          fn(api);
-        } catch (err) {
-          console.warn("CokeExt onBindEvents error:", err);
+          localStorage.removeItem("cokeIdleSave");
+        } catch (e) {
+          console.warn("Failed to clear save", e);
         }
+        state = defaultState();
+        saveGame();
+        updateUI();
+        pushLog("New game started. All progress has been reset.", "good");
       });
     }
   }
@@ -1532,34 +1430,13 @@
     loadGame();
     applyOfflineProgress();
     bindEvents();
-
-    // Plugin init hook
-    const api = buildPluginAPI();
-    const bus = window.CokeExt && window.CokeExt._pluginBus;
-    if (bus && bus.init.length) {
-      bus.init.forEach(fn => {
-        try {
-          fn(api);
-        } catch (err) {
-          console.warn("CokeExt onInit error:", err);
-        }
-      });
-    }
-
     updateUI();
     pushLog(
       "Welcome to Coke Tycoon Idle. Buy preforms, labels and packaging, build lines & warehouses, then tune your prices to grow from a tiny bottler into a shelf-dominating brand.",
       "good"
     );
     startLoop();
-
-    // Expose a safe reset API for other scripts if needed
-    window.cokeTycoonReset = hardResetGame;
   }
 
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
-  }
+  document.addEventListener("DOMContentLoaded", init);
 })();
