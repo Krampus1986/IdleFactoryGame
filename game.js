@@ -17,7 +17,7 @@
   const BASE_STORAGE_CAPACITY = 300;
   const BASE_FIXED_COST_PER_HOUR = 15;
 
-  // Flavors: now include basePrice and demand multiplier
+  // Flavors: include basePrice and demand multiplier
   const flavorDefs = [
     {
       id: "classic",
@@ -49,7 +49,29 @@
     }
   ];
 
-  // Global events (strike, inventory full, demand spike, etc.)
+  // Bottle sizes: affect price & demand
+  const sizeDefs = [
+    {
+      id: "small",
+      name: "0.5 L",
+      priceMultiplier: 0.75,
+      demandMultiplier: 1.25
+    },
+    {
+      id: "medium",
+      name: "1.0 L",
+      priceMultiplier: 1.0,
+      demandMultiplier: 1.0
+    },
+    {
+      id: "large",
+      name: "1.5 L",
+      priceMultiplier: 1.45,
+      demandMultiplier: 0.8
+    }
+  ];
+
+  // Global events
   const globalEventDefs = {
     workers_strike: {
       id: "workers_strike",
@@ -83,8 +105,34 @@
     }
   };
 
-  // Upgrades: capacity, auto-buy, marketing, operations, lines & warehouses
+  // AI rival archetypes
+  const rivalArchetypes = [
+    {
+      id: "discount",
+      name: "Discount Cola Co.",
+      style: "Always undercuts your price.",
+      baseBrandPower: 0.9,
+      aggression: 1.4
+    },
+    {
+      id: "premium",
+      name: "Premium Fizz Group",
+      style: "Charges more but has strong brand power.",
+      baseBrandPower: 1.4,
+      aggression: 0.8
+    },
+    {
+      id: "adstorm",
+      name: "AdStorm Soda",
+      style: "Lives and dies by marketing spend.",
+      baseBrandPower: 1.1,
+      aggression: 1.1
+    }
+  ];
+
+  // Upgrades (factory, marketing, prestige etc.)
   const upgradeDefs = [
+    // Capacity / infra
     {
       id: "capacity_1",
       name: "Extra Shift",
@@ -142,6 +190,8 @@
         state.meta.warehouses = (state.meta.warehouses || 1) + 1;
       }
     },
+
+    // Operations / automation / marketing
     {
       id: "auto_buy",
       name: "Smart Procurement",
@@ -176,6 +226,39 @@
       cost: 32000,
       apply: state => {
         state.demandModifier *= 1.07;
+      }
+    },
+
+    // Prestige-gated upgrades
+    {
+      id: "legacy_marketing_hub",
+      name: "Legacy Marketing Hub",
+      desc: "Requires Legacy x1. +5% demand per Legacy level.",
+      cost: 50000,
+      requiresLegacy: 1,
+      apply: state => {
+        state.demandModifier *= 1 + 0.05 * state.brandLegacy;
+      }
+    },
+    {
+      id: "legacy_efficiency",
+      name: "Legacy Process Playbook",
+      desc: "Requires Legacy x1. -10% fixed costs.",
+      cost: 45000,
+      requiresLegacy: 1,
+      apply: state => {
+        state.fixedCostPerHour *= 0.9;
+      }
+    },
+    {
+      id: "legacy_premium_brand",
+      name: "Heritage Brand Program",
+      desc: "Requires Legacy x2. Customers accept +15% higher prices with mild demand loss.",
+      cost: 90000,
+      requiresLegacy: 2,
+      apply: state => {
+        state.costModifier *= 0.9;
+        state.demandModifier *= 0.97;
       }
     }
   ];
@@ -223,6 +306,7 @@
     }
   ];
 
+  // RPG-style adventures
   const adventureDefs = [
     {
       id: "stadium_promo",
@@ -231,6 +315,22 @@
       durationHours: 8,
       minBottlesRequired: 200,
       reward: { cash: 8000, legacy: 0.1 }
+    },
+    {
+      id: "city_launch",
+      name: "City Launch Tour",
+      desc: "Tour the city with a branded truck and street team.",
+      durationHours: 12,
+      minBottlesRequired: 350,
+      reward: { cash: 16000, legacy: 0.2 }
+    },
+    {
+      id: "mountain_festival",
+      name: "Mountain Music Festival",
+      desc: "Set up a chilled stand at a 3-day festival in the hills.",
+      durationHours: 24,
+      minBottlesRequired: 600,
+      reward: { cash: 26000, legacy: 0.35 }
     }
   ];
 
@@ -263,6 +363,14 @@
     return state.flavors[state.activeFlavorId] || null;
   }
 
+  function getActiveSizeDef() {
+    return (
+      sizeDefs.find(s => s.id === state.activeSizeId) ||
+      sizeDefs.find(s => s.id === "medium") ||
+      sizeDefs[0]
+    );
+  }
+
   function getEffectiveCapacityPerHour() {
     const base = state.capacityPerHour || BASE_CAPACITY_PER_LINE;
     const eventMult =
@@ -291,8 +399,15 @@
       };
     });
 
+    const baseSizes = {};
+    sizeDefs.forEach(s => {
+      baseSizes[s.id] = {
+        unlocked: true
+      };
+    });
+
     return {
-      version: 2,
+      version: 3,
       cash: 2500,
       day: 1,
       hour: 8,
@@ -332,13 +447,11 @@
       costModifier: 1.0,
 
       flavors: baseFlavors,
+      sizes: baseSizes,
       activeFlavorId: "classic",
+      activeSizeId: "medium",
 
-      rival: {
-        active: false,
-        price: 2.5,
-        brandPower: 1.2
-      },
+      rivals: [],
 
       lastMarketShare: 1.0,
       lastDemandLevel: 0,
@@ -408,6 +521,9 @@
       if (!state.purchasedUpgrades) {
         state.purchasedUpgrades = {};
       }
+      if (!state.rivals) {
+        state.rivals = [];
+      }
 
       // Ensure flavors are fully shaped
       const newFlavors = {};
@@ -432,6 +548,14 @@
         };
       });
       state.flavors = newFlavors;
+
+      // Ensure sizes
+      const newSizes = {};
+      sizeDefs.forEach(s => {
+        newSizes[s.id] = { unlocked: true };
+      });
+      state.sizes = newSizes;
+      if (!state.activeSizeId) state.activeSizeId = "medium";
     } catch (e) {
       console.warn("Failed to load save, using default.", e);
       state = defaultState();
@@ -471,27 +595,20 @@
     return min + Math.floor(Math.random() * (max - min + 1));
   }
 
-  // expects HTML ids:
-  // eventPopup (overlay), eventTitle, eventBody, eventTag,
-  // eventDismiss, eventAcknowledge
-  function showEventPopup(title, text, tagLabel) {
-    const overlay = D("eventPopup");
-    const titleEl = D("eventTitle");
-    const bodyEl = D("eventBody");
-    const tagEl = D("eventTag");
-
-    if (titleEl) titleEl.textContent = title || "";
-    if (bodyEl) bodyEl.textContent = text || "";
-    if (tagEl) tagEl.textContent = tagLabel || "GLOBAL";
-
-    if (overlay) {
-      overlay.classList.remove("hidden");
-    }
+  function showEventPopup(title, text) {
+    const wrap = D("eventPopup");
+    if (!wrap) return;
+    const t = D("eventPopupTitle");
+    const p = D("eventPopupText");
+    if (t) t.textContent = title;
+    if (p) p.textContent = text;
+    wrap.classList.remove("hidden");
   }
 
   function hideEventPopup() {
-    const overlay = D("eventPopup");
-    if (overlay) overlay.classList.add("hidden");
+    const wrap = D("eventPopup");
+    if (!wrap) return;
+    wrap.classList.add("hidden");
   }
 
   function startGlobalEvent(id, options = {}) {
@@ -512,7 +629,7 @@
       extraCostPerHour: def.extraCostPerHour
     };
 
-    showEventPopup(def.name, def.desc + " (est. " + duration + "h)", "GLOBAL");
+    showEventPopup(def.name, def.desc + " (est. " + duration + "h)");
     pushLog("Global event started: " + def.name + ".", "bad");
   }
 
@@ -583,14 +700,63 @@
       const name = def ? def.name : "Adventure";
       showEventPopup(
         "Adventure complete",
-        name + " finished. Rewards applied to your brand.",
-        "ADVENTURE"
+        name + " finished. Rewards applied to your brand."
       );
       pushLog("Adventure completed: " + name + ".", "good");
       state.adventure.activeId = null;
       state.adventure.remainingHours = 0;
       state.adventure.rewardPending = null;
     }
+  }
+
+  // --- Rivals ---
+
+  function ensureRivalsActive() {
+    if (state.rivals && state.rivals.length > 0) return;
+
+    state.rivals = rivalArchetypes.map(arch => {
+      const basePrice = 2.0 + Math.random() * 1.2;
+      return {
+        id: arch.id,
+        name: arch.name,
+        style: arch.style,
+        brandPower: arch.baseBrandPower,
+        aggression: arch.aggression,
+        price: basePrice
+      };
+    });
+
+    pushLog(
+      "Multiple rival brands have entered your market. Each plays by their own rules.",
+      "bad"
+    );
+  }
+
+  function maybeActivateRival() {
+    if (state.rivals && state.rivals.length > 0) return;
+    if (state.stats.revenue >= 40000 || state.stats.sold >= 8000) {
+      ensureRivalsActive();
+    }
+  }
+
+  function updateRivalPricesDaily() {
+    if (!state.rivals || state.rivals.length === 0) return;
+    const baseOurPrice =
+      (getActiveFlavorState()?.price || BASE_MARKET_PRICE) *
+      getActiveSizeDef().priceMultiplier;
+
+    state.rivals.forEach(r => {
+      const mood = Math.random() * r.aggression;
+      let target =
+        baseOurPrice *
+        (r.id === "discount"
+          ? 0.85 - 0.1 * mood
+          : r.id === "premium"
+          ? 1.2 + 0.15 * mood
+          : 1.0 + 0.05 * (Math.random() - 0.5));
+      target = clamp(1.0, 5.0, target);
+      r.price = target;
+    });
   }
 
   // --- Game logic ---
@@ -646,7 +812,7 @@
         ", profit " +
         formatMoney(profit) +
         ".";
-      showEventPopup("Monthly Recap", msg, "MONTHLY");
+      showEventPopup("Monthly Recap", msg);
       pushLog(msg, profit >= 0 ? "good" : "bad");
 
       state.monthly = { produced: 0, sold: 0, revenue: 0, expenses: 0 };
@@ -688,13 +854,8 @@
     if (state.hour >= 24) {
       state.hour = 0;
       state.day += 1;
-      if (state.rival.active) {
-        const drift = (Math.random() - 0.5) * 0.4;
-        state.rival.price = clamp(
-          1.2,
-          5.0,
-          state.rival.price + drift
-        );
+      if (state.rivals && state.rivals.length > 0) {
+        updateRivalPricesDaily();
       }
     }
   }
@@ -811,9 +972,6 @@
     const legacyMult = 1 + state.brandLegacy * 0.2;
     const marketingMult = getEffectiveDemandMult();
 
-    const rivalActive = state.rival.active;
-    const rivalPrice = state.rival.price;
-
     const unlockedIds = Object.keys(state.flavors).filter(
       id => state.flavors[id].unlocked
     );
@@ -826,6 +984,9 @@
       return { sold: 0, demanded: 0, marketShare: 100 };
     }
 
+    const size = getActiveSizeDef();
+    const sizePriceMult = size.priceMultiplier || 1.0;
+
     let totalDesired = 0;
     let totalPlayerScore = 0;
     let totalRivalScore = 0;
@@ -836,8 +997,11 @@
       const def = flavorDefs.find(f => f.id === id);
       const fState = state.flavors[id];
 
-      const flavorMult = def?.demandMultiplier || 1.0;
-      const yourPrice = fState.price || def.basePrice || BASE_MARKET_PRICE;
+      const flavorMult =
+        (def?.demandMultiplier || 1.0) * (size.demandMultiplier || 1.0);
+
+      const basePrice = fState.price || def.basePrice || BASE_MARKET_PRICE;
+      const yourPrice = basePrice * sizePriceMult;
 
       const priceFactor = clamp(
         0,
@@ -845,28 +1009,32 @@
         (BASE_MARKET_PRICE * 1.8 - yourPrice) / (BASE_MARKET_PRICE * 1.0)
       );
 
-      let rivalScore = 0;
-      let playerScore = 1 * priceFactor;
-      if (rivalActive) {
-        const rivalPriceFactor = clamp(
-          0,
-          2.5,
-          (BASE_MARKET_PRICE * 1.8 - rivalPrice) /
-            (BASE_MARKET_PRICE * 1.0)
-        );
-        rivalScore = state.rival.brandPower * rivalPriceFactor;
+      let rivalScoreSum = 0;
+      if (state.rivals && state.rivals.length > 0) {
+        state.rivals.forEach(r => {
+          const rivalPriceFactor = clamp(
+            0,
+            2.5,
+            (BASE_MARKET_PRICE * 1.8 - r.price) /
+              (BASE_MARKET_PRICE * 1.0)
+          );
+          rivalScoreSum += r.brandPower * rivalPriceFactor * r.aggression;
+        });
       }
 
       const baseDemand =
         globalDemandBase * legacyMult * marketingMult * flavorMult;
       const randomFactor = 0.85 + Math.random() * 0.3;
-      const totalScore = playerScore + rivalScore;
+
+      const playerScore = 1 * priceFactor;
+      const totalScore = playerScore + rivalScoreSum;
 
       let yourDemand;
       if (totalScore <= 0.01) {
         yourDemand = baseDemand * randomFactor;
       } else {
-        yourDemand = (baseDemand * (playerScore / totalScore)) * randomFactor;
+        yourDemand =
+          (baseDemand * (playerScore / totalScore)) * randomFactor;
       }
 
       const demandRounded = Math.max(0, Math.round(yourDemand));
@@ -876,12 +1044,12 @@
         yourPrice,
         demandRounded,
         playerScore,
-        rivalScore
+        rivalScoreSum
       });
 
       totalDesired += demandRounded;
       totalPlayerScore += playerScore;
-      totalRivalScore += rivalScore;
+      totalRivalScore += rivalScoreSum;
     });
 
     const totalScore = totalPlayerScore + totalRivalScore;
@@ -948,18 +1116,6 @@
         pushLog("Unlocked new flavor: " + f.name + ".", "good");
       }
     });
-  }
-
-  function maybeActivateRival() {
-    if (state.rival.active) return;
-    if (state.stats.revenue >= 40000 || state.stats.sold >= 8000) {
-      state.rival.active = true;
-      state.rival.price = 2.3 + Math.random() * 0.6;
-      pushLog(
-        "Major retailer noticed you. They roll out their own cola and start competing on price.",
-        "bad"
-      );
-    }
   }
 
   function checkUpgrades() {
@@ -1046,9 +1202,38 @@
         state.activeFlavorId = def.id;
         const f = getActiveFlavorState();
         if (f) {
-          state.pricePerBottle = f.price;
+          state.pricePerBottle =
+            f.price * getActiveSizeDef().priceMultiplier;
         }
         renderFlavors();
+        updateMarketUI();
+      });
+
+      row.appendChild(pill);
+    });
+  }
+
+  function renderSizes() {
+    const row = D("sizesRow");
+    if (!row) return;
+    row.innerHTML = "";
+    sizeDefs.forEach(def => {
+      const pill = document.createElement("button");
+      pill.type = "button";
+      pill.className =
+        "flavor-pill" + (def.id === state.activeSizeId ? " active" : "");
+      pill.dataset.sizeId = def.id;
+
+      const dot = document.createElement("span");
+      dot.className = "dot";
+      pill.appendChild(dot);
+
+      const label = document.createElement("span");
+      label.textContent = def.name;
+      pill.appendChild(label);
+
+      pill.addEventListener("click", () => {
+        state.activeSizeId = def.id;
         updateMarketUI();
       });
 
@@ -1076,7 +1261,11 @@
       left.appendChild(p);
 
       const small = document.createElement("small");
-      small.textContent = "Cost: " + formatMoney(def.cost);
+      let costText = "Cost: " + formatMoney(def.cost);
+      if (def.requiresLegacy) {
+        costText += " • requires Legacy x" + def.requiresLegacy;
+      }
+      small.textContent = costText;
       left.appendChild(small);
 
       const tag = document.createElement("div");
@@ -1087,9 +1276,19 @@
       const btn = document.createElement("button");
       btn.className = "btn primary";
       btn.textContent = purchased ? "Owned" : "Buy";
-      btn.disabled = purchased || state.cash < def.cost;
+      const legacyBlocked =
+        def.requiresLegacy && state.brandLegacy < def.requiresLegacy;
+      btn.disabled =
+        purchased || state.cash < def.cost || legacyBlocked;
       btn.addEventListener("click", () => {
         if (purchased) return;
+        if (legacyBlocked) {
+          pushLog(
+            "You need higher Brand Legacy to buy " + def.name + ".",
+            "bad"
+          );
+          return;
+        }
         if (state.cash < def.cost) {
           pushLog("Not enough cash for " + def.name + ".", "bad");
           return;
@@ -1139,7 +1338,7 @@
       box.innerHTML = `
         <div class="chip-main">
           <strong>No active campaign</strong>
-          <span>Equip your factory with a field promotion to boost growth.</span>
+          <span>Pick an adventure to boost your brand.</span>
         </div>
       `;
       return;
@@ -1154,7 +1353,7 @@
         <span>${remaining}h remaining</span>
       </div>
       <div class="chip-sub">
-        <span>Adventure in progress. Boosted impact on your brand while it runs.</span>
+        <span>${def ? def.desc : "Adventure in progress."}</span>
       </div>
     `;
   }
@@ -1201,11 +1400,12 @@
     const autoEl = D("autoBuyStatus");
     if (autoEl) autoEl.textContent = autoText;
 
-    const rivalStatus = state.rival.active
-      ? "Rivals: competing"
-      : "Rivals: sleeping";
+    let rivalStatusText = "Rivals: none yet";
+    if (state.rivals && state.rivals.length > 0) {
+      rivalStatusText = "Rivals: " + state.rivals.length + " active";
+    }
     const rivalEl = D("rivalStatus");
-    if (rivalEl) rivalEl.textContent = rivalStatus;
+    if (rivalEl) rivalEl.textContent = rivalStatusText;
 
     const demandHint = D("demandHint");
     if (demandHint) {
@@ -1219,15 +1419,18 @@
 
   function updateMarketUI() {
     const activeFlavor = getActiveFlavorState();
-    const price =
+    const size = getActiveSizeDef();
+
+    const basePrice =
       activeFlavor && typeof activeFlavor.price === "number"
         ? activeFlavor.price
         : state.pricePerBottle;
 
-    state.pricePerBottle = price;
+    const finalPrice = basePrice * (size.priceMultiplier || 1.0);
+    state.pricePerBottle = finalPrice;
 
     const priceEl = D("priceDisplay");
-    if (priceEl) priceEl.textContent = formatMoney(price);
+    if (priceEl) priceEl.textContent = formatMoney(finalPrice);
 
     const marketPriceEl = D("marketPriceDisplay");
     if (marketPriceEl)
@@ -1249,10 +1452,16 @@
     if (shareEl) shareEl.textContent = sharePercent + "%";
 
     const rivalPriceEl = D("rivalPriceDisplay");
-    if (rivalPriceEl)
-      rivalPriceEl.textContent = state.rival.active
-        ? formatMoney(state.rival.price)
-        : "–";
+    if (rivalPriceEl) {
+      if (!state.rivals || state.rivals.length === 0) {
+        rivalPriceEl.textContent = "–";
+      } else {
+        const avg =
+          state.rivals.reduce((sum, r) => sum + r.price, 0) /
+          state.rivals.length;
+        rivalPriceEl.textContent = formatMoney(avg);
+      }
+    }
 
     const soldEl = D("soldDisplay");
     if (soldEl) soldEl.textContent = state.stats.sold.toLocaleString();
@@ -1263,7 +1472,7 @@
 
     const slider = D("priceSlider");
     if (slider && slider !== document.activeElement) {
-      slider.value = price.toFixed(2);
+      slider.value = basePrice.toFixed(2);
     }
 
     const prestigeButton = D("prestigeButton");
@@ -1299,6 +1508,7 @@
     updateMarketUI();
     updatePrestigeUI();
     renderFlavors();
+    renderSizes();
     renderUpgrades();
     renderAchievements();
     renderAdventureUI();
@@ -1326,12 +1536,13 @@
       slider.addEventListener("input", () => {
         const v = parseFloat(slider.value);
         if (!isFinite(v)) return;
-        const price = clamp(0.5, 5, v);
+        const basePrice = clamp(0.5, 5, v);
         const f = getActiveFlavorState();
         if (f) {
-          f.price = price;
+          f.price = basePrice;
         }
-        state.pricePerBottle = price;
+        state.pricePerBottle =
+          basePrice * getActiveSizeDef().priceMultiplier;
         updateMarketUI();
         renderFlavors();
       });
@@ -1354,41 +1565,68 @@
       });
     }
 
-    // Popup buttons & overlay: allow Ignore, OK, and clicking outside
-    const overlay = D("eventPopup");
-    const dismissBtn = D("eventDismiss");
-    const ackBtn = D("eventAcknowledge");
-    const closeBtn = D("eventPopupClose"); // optional X button if present
+    const popupOk = D("eventPopupClose");
+    if (popupOk) {
+      popupOk.addEventListener("click", () => {
+        hideEventPopup();
+      });
+    }
 
-    if (dismissBtn) {
-      dismissBtn.addEventListener("click", () => {
+    const popupIgnore = D("eventPopupIgnore");
+    if (popupIgnore) {
+      popupIgnore.addEventListener("click", () => {
         hideEventPopup();
       });
     }
-    if (ackBtn) {
-      ackBtn.addEventListener("click", () => {
-        hideEventPopup();
-      });
-    }
-    if (closeBtn) {
-      closeBtn.addEventListener("click", () => {
-        hideEventPopup();
-      });
-    }
-    if (overlay) {
-      overlay.addEventListener("click", e => {
-        if (e.target === overlay) {
+
+    const popupRoot = D("eventPopup");
+    if (popupRoot) {
+      popupRoot.addEventListener("click", e => {
+        if (e.target === popupRoot) {
           hideEventPopup();
         }
       });
     }
 
-    const adventureBtn = D("adventureStartStadium");
-    if (adventureBtn) {
-      adventureBtn.addEventListener("click", () => {
+    const adventureBtnStadium = D("adventureStartStadium");
+    if (adventureBtnStadium) {
+      adventureBtnStadium.addEventListener("click", () => {
         startAdventure("stadium_promo");
         updateUI();
         saveGame();
+      });
+    }
+
+    const adventureBtnCity = D("adventureStartCity");
+    if (adventureBtnCity) {
+      adventureBtnCity.addEventListener("click", () => {
+        startAdventure("city_launch");
+        updateUI();
+        saveGame();
+      });
+    }
+
+    const adventureBtnMountain = D("adventureStartMountain");
+    if (adventureBtnMountain) {
+      adventureBtnMountain.addEventListener("click", () => {
+        startAdventure("mountain_festival");
+        updateUI();
+        saveGame();
+      });
+    }
+
+    const resetBtn = D("hardResetButton");
+    if (resetBtn) {
+      resetBtn.addEventListener("click", () => {
+        const sure = confirm(
+          "Start a completely new company? This will clear your save and reset progress (Legacy will be lost too)."
+        );
+        if (!sure) return;
+        state = defaultState();
+        saveGame();
+        updateUI();
+        hideEventPopup();
+        pushLog("New game started from scratch. Good luck, founder!", "good");
       });
     }
   }
@@ -1402,59 +1640,20 @@
     }, TICK_MS);
   }
 
-      // --- Hard reset / new game helper ---
-
-  function hardResetGame() {
-    const sure = confirm(
-      "Start a completely new game? This will erase your current save and Brand Legacy."
-    );
-    if (!sure) return;
-
-    try {
-      localStorage.removeItem("cokeIdleSave");
-    } catch (e) {
-      console.warn("Failed to clear save key", e);
-    }
-
-    state = defaultState();
-    state.lastTick = Date.now();
-    saveGame();
-    updateUI();
-    pushLog("New game started. Good luck, rookie bottler!", "good");
-  }
-
-  // expose in case you want to trigger it from DevTools
-  window.cokeTycoonReset = hardResetGame;
-
   // --- Bootstrap ---
 
   function init() {
     loadGame();
     applyOfflineProgress();
     bindEvents();
-
-    // hook up reset button if present in HTML
-    const resetBtn = D("resetGameButton");
-    if (resetBtn) {
-      resetBtn.addEventListener("click", hardResetGame);
-    }
-
     updateUI();
+    hideEventPopup();
     pushLog(
-      "Welcome to Coke Tycoon Idle. Buy preforms, labels and packaging, build lines & warehouses, then tune your prices to grow from a tiny bottler into a shelf-dominating brand.",
+      "Welcome to Coke Tycoon Idle. Choose flavors, bottle sizes, equipment & adventures to grow from a tiny bottler into a shelf-dominating brand.",
       "good"
     );
     startLoop();
   }
 
-  // Make sure init runs even if DOMContentLoaded already fired
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", init);
-  } else {
-    init();
-  }
-
+  document.addEventListener("DOMContentLoaded", init);
 })();
-
-
-
