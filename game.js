@@ -1402,12 +1402,43 @@
     }, TICK_MS);
   }
 
+      // --- Hard reset / new game helper ---
+
+  function hardResetGame() {
+    const sure = confirm(
+      "Start a completely new game? This will erase your current save and Brand Legacy."
+    );
+    if (!sure) return;
+
+    try {
+      localStorage.removeItem("cokeIdleSave");
+    } catch (e) {
+      console.warn("Failed to clear save key", e);
+    }
+
+    state = defaultState();
+    state.lastTick = Date.now();
+    saveGame();
+    updateUI();
+    pushLog("New game started. Good luck, rookie bottler!", "good");
+  }
+
+  // expose in case you want to trigger it from DevTools
+  window.cokeTycoonReset = hardResetGame;
+
   // --- Bootstrap ---
 
   function init() {
     loadGame();
     applyOfflineProgress();
     bindEvents();
+
+    // hook up reset button if present in HTML
+    const resetBtn = D("resetGameButton");
+    if (resetBtn) {
+      resetBtn.addEventListener("click", hardResetGame);
+    }
+
     updateUI();
     pushLog(
       "Welcome to Coke Tycoon Idle. Buy preforms, labels and packaging, build lines & warehouses, then tune your prices to grow from a tiny bottler into a shelf-dominating brand.",
@@ -1416,6 +1447,14 @@
     startLoop();
   }
 
-  document.addEventListener("DOMContentLoaded", init);
+  // Make sure init runs even if DOMContentLoaded already fired
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", init);
+  } else {
+    init();
+  }
 
 })();
+
+
+
