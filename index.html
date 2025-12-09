@@ -23,6 +23,30 @@
     </symbol>
   </svg>
 
+  <!-- Global event popup -->
+  <div
+    class="event-popup-overlay hidden"
+    id="eventPopup"
+    role="dialog"
+    aria-modal="true"
+    aria-labelledby="eventPopupTitle"
+  >
+    <div class="event-popup-panel">
+      <div class="event-popup-header">
+        <div class="event-popup-title" id="eventPopupTitle">Global event</div>
+        <span class="event-popup-tag">GLOBAL</span>
+      </div>
+      <div class="event-popup-body" id="eventPopupText">
+        An event is affecting your factory.
+      </div>
+      <div class="event-popup-actions">
+        <button type="button" class="btn ghost" id="eventPopupClose">
+          OK
+        </button>
+      </div>
+    </div>
+  </div>
+
   <div class="app">
     <header class="topbar">
       <div class="brand-chunk" aria-label="Coke Tycoon Idle header">
@@ -33,23 +57,27 @@
         </div>
         <div class="brand-text">
           <div class="brand-title">Coke Tycoon Idle</div>
-          <div class="brand-sub">Buy preforms, build bottling lines, win the shelf war.</div>
+          <div class="brand-sub">
+            Buy preforms, build bottling lines, win the shelf war.
+          </div>
         </div>
       </div>
       <div class="top-stats">
         <div class="pill accent">
           <span class="dot" aria-hidden="true"></span>
           <div>
-            <div><strong id="cashDisplay">$0</strong></div>
+            <div><strong id="cashDisplay">$0.00</strong></div>
             <small>Working capital</small>
           </div>
         </div>
         <div class="pill">
           <div>
-            <div><strong><span id="dayDisplay">1</span></strong> •
+            <div>
+              <strong><span id="dayDisplay">1</span></strong>
+              &bull;
               <strong><span id="timeDisplay">08:00</span></strong>
             </div>
-            <small>Day • Factory clock</small>
+            <small>Day &bull; Factory clock</small>
           </div>
         </div>
         <div class="pill">
@@ -68,7 +96,7 @@
         <section class="card" aria-labelledby="productionTitle">
           <div class="card-header">
             <div class="card-title" id="productionTitle">
-              Production & Inventory
+              Production &amp; Inventory
             </div>
             <div class="card-pill">
               <svg class="icon" aria-hidden="true">
@@ -92,10 +120,6 @@
                 <div class="stat">
                   <span class="label">Lifetime produced</span>
                   <span class="value" id="lifetimeProducedDisplay">0</span>
-                </div>
-                <div class="stat">
-                  <span class="label">Storage used</span>
-                  <span class="value" id="storageUsageDisplay">0 / 0</span>
                 </div>
                 <div class="stat">
                   <span class="label">Production lines</span>
@@ -124,6 +148,7 @@
                     </div>
                   </div>
                 </div>
+
                 <div class="chip">
                   <div class="chip-main">
                     <strong>Labels</strong>
@@ -141,13 +166,14 @@
                     </div>
                   </div>
                 </div>
+
                 <div class="chip">
                   <div class="chip-main">
                     <strong>Packaging</strong>
                     <span id="invPackaging">0</span>
                   </div>
                   <div class="chip-sub">
-                    <span>Trays & shrink-wrap.</span>
+                    <span>Trays &amp; shrink-wrap.</span>
                     <div>
                       <button class="btn primary" data-buy="packaging" data-amount="50">
                         +50
@@ -158,15 +184,16 @@
                     </div>
                   </div>
                 </div>
+
                 <div class="chip">
                   <div class="chip-main">
                     <strong>Finished bottles</strong>
-                    <span id="invBottles">0</span>
+                    <span id="invBottles">0 / 0</span>
                   </div>
                   <div class="chip-sub">
                     <span>Ready to ship.</span>
-                    <div class="badge-row">
-                      <span class="badge warn" id="storageFullHint">Storage OK</span>
+                    <div class="storage-status" id="storageStatus">
+                      Storage OK
                     </div>
                   </div>
                 </div>
@@ -179,6 +206,7 @@
                 <div class="badge-row">
                   <span class="badge" id="autoBuyStatus">Auto-buy: off</span>
                   <span class="badge" id="rivalStatus">Rivals: sleeping</span>
+                  <span class="badge warn" id="demandHint">Demand: calm</span>
                 </div>
               </div>
             </div>
@@ -189,7 +217,7 @@
         <section class="card" aria-labelledby="marketTitle">
           <div class="card-header">
             <div class="card-title" id="marketTitle">
-              Market & Pricing
+              Market &amp; Pricing
             </div>
             <div class="card-pill">
               <svg class="icon" aria-hidden="true">
@@ -209,7 +237,7 @@
             <div>
               <div class="subheading">Retail price per bottle</div>
               <div class="price-row">
-                <div>
+                <div class="stat-row">
                   <div class="stat">
                     <span class="label">Your price</span>
                     <span class="value" id="priceDisplay">$0.00</span>
@@ -220,14 +248,22 @@
                   </div>
                 </div>
                 <div class="range-wrap">
-                  <label for="priceSlider">Drag to adjust price (higher = more margin, lower = more demand).</label>
-                  <input id="priceSlider" type="range" min="0.5" max="5" step="0.05" />
+                  <label for="priceSlider">
+                    Drag to adjust price (higher = more margin, lower = more demand).
+                  </label>
+                  <input
+                    id="priceSlider"
+                    type="range"
+                    min="0.5"
+                    max="5"
+                    step="0.05"
+                  />
                 </div>
               </div>
             </div>
 
             <div>
-              <div class="subheading">Demand & competition</div>
+              <div class="subheading">Demand &amp; competition</div>
               <div class="stat-row">
                 <div class="stat">
                   <span class="label">Demand level</span>
@@ -239,7 +275,25 @@
                 </div>
                 <div class="stat">
                   <span class="label">Rival price</span>
-                  <span class="value" id="rivalPriceDisplay">$0.00</span>
+                  <span class="value" id="rivalPriceDisplay">–</span>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <div class="subheading">Financials</div>
+              <div class="stat-row">
+                <div class="stat">
+                  <span class="label">Total sold</span>
+                  <span class="value" id="soldDisplay">0</span>
+                </div>
+                <div class="stat">
+                  <span class="label">Total revenue</span>
+                  <span class="value" id="revenueDisplay">$0.00</span>
+                </div>
+                <div class="stat">
+                  <span class="label">Total expenses</span>
+                  <span class="value" id="expensesDisplay">$0.00</span>
                 </div>
               </div>
             </div>
@@ -249,11 +303,11 @@
 
       <!-- RIGHT COLUMN -->
       <div class="column">
-        <!-- Upgrades & Prestige -->
+        <!-- Growth & Prestige -->
         <section class="card" aria-labelledby="growthTitle">
           <div class="card-header">
             <div class="card-title" id="growthTitle">
-              Growth & Prestige
+              Growth &amp; Prestige
             </div>
             <div class="card-pill">
               <svg class="icon" aria-hidden="true">
@@ -279,8 +333,33 @@
                   </span>
                 </div>
                 <button class="btn danger" id="prestigeButton" disabled>
-                  Rebrand & restart
+                  Rebrand &amp; restart
                 </button>
+              </div>
+            </div>
+
+            <div>
+              <div class="subheading">Campaigns &amp; Adventures</div>
+              <div class="chip">
+                <div id="adventureBox">
+                  <!-- filled by JS -->
+                  <div class="chip-main">
+                    <strong>No active campaign</strong>
+                    <span>Launch a promotion to boost growth.</span>
+                  </div>
+                </div>
+                <div class="chip-sub adventure-actions">
+                  <span>Spend bottles now to run special promotions.</span>
+                  <div>
+                    <button
+                      type="button"
+                      class="btn primary"
+                      id="adventureStartStadium"
+                    >
+                      Stadium promo
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
@@ -293,42 +372,21 @@
           </div>
         </section>
 
-        <!-- Adventure mode -->
-        <section class="card" aria-labelledby="adventureTitle">
-          <div class="card-header">
-            <div class="card-title" id="adventureTitle">
-              Adventure Mode
-            </div>
-            <div class="card-pill">
-              Sales routes & boosts
-            </div>
-          </div>
-          <div class="card-body">
-            <div>
-              <div class="subheading">Route status</div>
-              <div id="adventureBox">
-                No active adventure. Equip your brand and send a truck on a promo run.
-              </div>
-            </div>
-            <div>
-              <div class="subheading">Actions</div>
-              <button class="btn primary" id="adventureStartStadium">
-                Stadium promo run
-              </button>
-            </div>
-          </div>
-        </section>
-
         <!-- Log -->
         <section class="card" aria-labelledby="logTitle">
           <div class="card-header">
             <div class="card-title" id="logTitle">
               Board Feed
             </div>
-            <div class="card-pill">Events & milestones</div>
+            <div class="card-pill">Events &amp; milestones</div>
           </div>
           <div class="card-body">
-            <div class="log" id="logBox" aria-live="polite" aria-atomic="false">
+            <div
+              class="log"
+              id="logBox"
+              aria-live="polite"
+              aria-atomic="false"
+            >
               <!-- log entries -->
             </div>
           </div>
@@ -341,31 +399,6 @@
     </main>
   </div>
 
-  <!-- Global event popup -->
-  <div id="eventPopup" class="hidden" role="dialog" aria-modal="true" aria-labelledby="eventTitle">
-    <div class="event-popup-panel">
-      <div class="event-popup-header">
-        <div class="event-popup-title" id="eventTitle">Global event</div>
-        <div class="event-popup-tag" id="eventTag">Global</div>
-      </div>
-      <div class="event-popup-body" id="eventBody">
-        <!-- filled by JS -->
-      </div>
-      <div class="event-popup-footer">
-        <button class="btn ghost" id="eventDismiss">Ignore</button>
-        <button class="btn primary" id="eventAcknowledge">OK</button>
-      </div>
-    </div>
-  </div>
-
-<div class="footer-note">
-  Progress is saved automatically in your browser.
-  <button type="button" class="btn ghost small" id="resetGameButton">
-    New game
-  </button>
-</div>
-
   <script src="game.js"></script>
 </body>
-
 </html>
