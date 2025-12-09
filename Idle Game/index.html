@@ -4,7 +4,7 @@
   <meta charset="utf-8" />
   <title>Coke Tycoon Idle</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
-    <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
   <!-- SVG sprite for simple icons -->
@@ -93,6 +93,14 @@
                   <span class="label">Lifetime produced</span>
                   <span class="value" id="lifetimeProducedDisplay">0</span>
                 </div>
+                <div class="stat">
+                  <span class="label">Storage used</span>
+                  <span class="value" id="storageUsageDisplay">0 / 0</span>
+                </div>
+                <div class="stat">
+                  <span class="label">Production lines</span>
+                  <span class="value" id="lineCountDisplay">1</span>
+                </div>
               </div>
             </div>
 
@@ -157,6 +165,9 @@
                   </div>
                   <div class="chip-sub">
                     <span>Ready to ship.</span>
+                    <div class="badge-row">
+                      <span class="badge warn" id="storageFullHint">Storage OK</span>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -282,6 +293,32 @@
           </div>
         </section>
 
+        <!-- Adventure mode -->
+        <section class="card" aria-labelledby="adventureTitle">
+          <div class="card-header">
+            <div class="card-title" id="adventureTitle">
+              Adventure Mode
+            </div>
+            <div class="card-pill">
+              Sales routes & boosts
+            </div>
+          </div>
+          <div class="card-body">
+            <div>
+              <div class="subheading">Route status</div>
+              <div id="adventureBox">
+                No active adventure. Equip your brand and send a truck on a promo run.
+              </div>
+            </div>
+            <div>
+              <div class="subheading">Actions</div>
+              <button class="btn primary" id="adventureStartStadium">
+                Stadium promo run
+              </button>
+            </div>
+          </div>
+        </section>
+
         <!-- Log -->
         <section class="card" aria-labelledby="logTitle">
           <div class="card-header">
@@ -304,6 +341,23 @@
     </main>
   </div>
 
-    <script src="game.js"></script>
+  <!-- Global event popup -->
+  <div id="eventPopup" class="hidden" role="dialog" aria-modal="true" aria-labelledby="eventTitle">
+    <div class="event-popup-panel">
+      <div class="event-popup-header">
+        <div class="event-popup-title" id="eventTitle">Global event</div>
+        <div class="event-popup-tag" id="eventTag">Global</div>
+      </div>
+      <div class="event-popup-body" id="eventBody">
+        <!-- filled by JS -->
+      </div>
+      <div class="event-popup-footer">
+        <button class="btn ghost" id="eventDismiss">Ignore</button>
+        <button class="btn primary" id="eventAcknowledge">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
 </body>
 </html>
