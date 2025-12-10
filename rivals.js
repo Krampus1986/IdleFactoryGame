@@ -1,205 +1,181 @@
+// rivals.js
+// Coke Tycoon Idle – Rivals & Channels Extension
+// ----------------------------------------------
+// Purpose:
+//   - Define 3 rival brands with different personalities & base shares.
+//   - Store them in state.ext.rivals so game.js can simulate market share, prices, etc.
+//   - Provide a *light* fallback UI if rivalsGrid is empty, without fighting game.js.
+//
+// Data model (state.ext.rivals):
+//   {
+//     roster: [
+//       {
+//         id: string,
+//         name: string,
+//         style: string,
+//         color: string,
+//         baseShare: number,        // 0–1, fraction of market
+//         priceAggression: number,  // 0–1, higher = cuts price hard
+//         marketingFocus: string,   // "discount" | "premium" | "youth" | ...
+//         notes: string
+//       },
+//       ...
+//     ],
+//     lastUpdateDay: number
+//   }
+
 (function () {
-  if (!window.CokeExt || typeof window.CokeExt.register !== "function") return;
+  'use strict';
 
-  const productionEquipment = [
+  if (!window.CokeExt || typeof window.CokeExt.register !== 'function') return;
+
+  // ---- Static rival definitions (authoritative) ------------------------------
+  const RIVALS = [
     {
-      id: "neck_trimmer",
-      name: "Neck Trimmer Station",
-      desc: "Reduces reject rate from bad necks. +10% effective capacity.",
-      cost: 6500,
-      apply(state) {
-        state.capacityPerHour = Math.round(state.capacityPerHour * 1.1);
-      }
+      id: 'polar_fizz',
+      name: 'Polar Fizz',
+      style: 'Aggressive discounter',
+      color: '#0ea5e9',              // icy blue
+      baseShare: 0.30,               // ~30% baseline market share
+      priceAggression: 0.9,          // cuts prices quickly
+      marketingFocus: 'discount',    // hard supermarket / discount chain focus
+      notes: 'Wins on low shelf price and multipacks in discount chains.'
     },
     {
-      id: "inline_inspection",
-      name: "Inline Inspection Camera",
-      desc: "Better quality control, less scrap. +5% capacity, -3% effective cost.",
-      cost: 12000,
-      apply(state) {
-        state.capacityPerHour = Math.round(state.capacityPerHour * 1.05);
-        state.costModifier *= 0.97;
-      }
+      id: 'royal_cola',
+      name: 'Royal Cola',
+      style: 'Classic mainstream brand',
+      color: '#f97316',              // warm orange-red
+      baseShare: 0.35,               // ~35% baseline
+      priceAggression: 0.5,          // moderate price moves
+      marketingFocus: 'mass_media',  // TV, billboards, big city branding
+      notes: 'Strong legacy brand, stable pricing, big city billboard presence.'
     },
     {
-      id: "energy_recovery",
-      name: "Energy Recovery System",
-      desc: "Uses oven waste heat. Cuts hourly fixed costs by 10%.",
-      cost: 18000,
-      apply(state) {
-        state.fixedCostPerHour = Math.max(
-          0,
-          Math.round(state.fixedCostPerHour * 0.9)
-        );
-      }
+      id: 'zen_bubble',
+      name: 'Zen Bubble',
+      style: 'Trendy zero-sugar upstart',
+      color: '#22c55e',              // fresh green
+      baseShare: 0.15,               // ~15% baseline
+      priceAggression: 0.3,          // less focused on price war
+      marketingFocus: 'youth',       // campuses, festivals, social media
+      notes: 'Targets younger consumers with zero-sugar, limited flavors, and social buzz.'
     }
   ];
 
-  const promoEquipment = [
-    {
-      id: "cooler_fridge",
-      name: "Branded Cooler Fridges",
-      desc: "+6% demand in small shops.",
-      cost: 9000,
-      apply(state) {
-        state.demandModifier *= 1.06;
-      }
-    },
-    {
-      id: "billboard_city",
-      name: "City Billboard Pack",
-      desc: "Large visibility boost. +8% demand, +$5/hour fixed cost.",
-      cost: 16000,
-      apply(state) {
-        state.demandModifier *= 1.08;
-        state.fixedCostPerHour += 5;
-      }
-    },
-    {
-      id: "music_truck",
-      name: "Promo Music Truck",
-      desc: "Drives around playing your jingle. +10% demand spikes during heatwaves.",
-      cost: 22000,
-      apply(state) {
-        if (!state.ext) state.ext = {};
-        if (!state.ext.equipment) state.ext.equipment = {};
-        state.ext.equipment.musicTruck = true;
-      }
-    }
-  ];
-
-  function getEquipmentState(state) {
+  // ---- State helpers ---------------------------------------------------------
+  function ensureRivalsState(state) {
+    if (!state) return null;
     if (!state.ext) state.ext = {};
-    if (!state.ext.equipmentExt) {
-      state.ext.equipmentExt = {
-        owned: {},
-        spent: 0
+
+    if (!state.ext.rivals) {
+      state.ext.rivals = {
+        roster: [],
+        lastUpdateDay: state.day || 1
       };
     }
-    return state.ext.equipmentExt;
+
+    // If roster is empty or missing, seed from RIVALS.
+    if (!Array.isArray(state.ext.rivals.roster) || state.ext.rivals.roster.length === 0) {
+      // Clone static rivals so we can mutate per-save later if needed.
+      state.ext.rivals.roster = RIVALS.map(r => Object.assign({}, r));
+    }
+
+    return state.ext.rivals;
   }
 
-  function renderList(api, listEl, items, ownedMap, group) {
-    listEl.innerHTML = "";
-    const state = api.getState();
+  // ---- Light fallback rendering (only if game.js didn't fill the grid) ------
+  function renderFallbackRivals(api, rivalsState) {
+    if (!api || !api.D) return;
 
-    items.forEach(def => {
-      const owned = !!ownedMap[def.id];
+    const rivalsGrid = api.D('rivalsGrid');
+    if (!rivalsGrid) return;
 
-      const card = document.createElement("div");
-      card.className = "chip equipment-card" + (owned ? " owned" : "");
+    // Avoid double-rendering: only draw if grid is effectively empty.
+    if (rivalsGrid.children && rivalsGrid.children.length > 0) return;
 
-      const main = document.createElement("div");
-      main.className = "chip-main";
-      const title = document.createElement("span");
-      title.textContent = def.name;
-      const status = document.createElement("span");
-      status.textContent = owned ? "Owned" : api.formatMoney(def.cost);
-      main.appendChild(title);
-      main.appendChild(status);
+    const roster = (rivalsState && rivalsState.roster) || [];
 
-      const sub = document.createElement("div");
-      sub.className = "chip-sub";
-      const desc = document.createElement("span");
-      desc.textContent = def.desc;
-      sub.appendChild(desc);
+    rivalsGrid.innerHTML = '';
+    roster.forEach(rival => {
+      const card = document.createElement('div');
+      card.className = 'chip rival-card';
 
-      const actions = document.createElement("div");
-      if (!owned) {
-        const btn = document.createElement("button");
-        btn.type = "button";
-        btn.className = "btn ghost";
-        btn.textContent = state.cash >= def.cost ? "Buy" : "Need cash";
-        btn.disabled = state.cash < def.cost;
-        btn.setAttribute("data-equip-id", def.id);
-        btn.setAttribute("data-equip-group", group);
-        actions.appendChild(btn);
-      } else {
-        const tag = document.createElement("span");
-        tag.className = "badge";
-        tag.textContent = "Installed";
-        actions.appendChild(tag);
-      }
-      sub.appendChild(actions);
+      const main = document.createElement('div');
+      main.className = 'chip-main';
+
+      const nameEl = document.createElement('span');
+      nameEl.textContent = rival.name;
+
+      const shareEl = document.createElement('span');
+      const pct = Math.round((rival.baseShare || 0) * 100);
+      shareEl.textContent = pct + '% baseline share';
+
+      main.appendChild(nameEl);
+      main.appendChild(shareEl);
+
+      const sub = document.createElement('div');
+      sub.className = 'chip-sub';
+
+      const styleEl = document.createElement('span');
+      styleEl.textContent = rival.style + ' • Focus: ' + rival.marketingFocus;
+
+      const notesEl = document.createElement('span');
+      notesEl.textContent = rival.notes;
+
+      sub.appendChild(styleEl);
+      sub.appendChild(notesEl);
 
       card.appendChild(main);
       card.appendChild(sub);
-      listEl.appendChild(card);
+
+      // Optional: color stripe
+      if (rival.color) {
+        card.style.borderLeft = '4px solid ' + rival.color;
+        card.style.paddingLeft = '0.75rem';
+      }
+
+      rivalsGrid.appendChild(card);
     });
   }
 
+  // ---- Extension handler ----------------------------------------------------
   const handler = {
     onInit(api) {
+      if (!api || !api.getState) return;
       const state = api.getState();
-      getEquipmentState(state); // just ensure ext structure
+      if (!state) return;
+
+      ensureRivalsState(state);
     },
 
     onBindEvents(api) {
-      const equipList = api.D("equipmentList");
-      const promoList = api.D("promoList");
-      if (!equipList && !promoList) return;
+      // Reserved for future rival-specific actions.
+      // For now, price + channels logic is handled in game.js.
+      if (!api || !api.D) return;
 
-      const clickHandler = e => {
-        const btn = e.target.closest("button[data-equip-id]");
-        if (!btn) return;
-        const id = btn.getAttribute("data-equip-id");
-        const group = btn.getAttribute("data-equip-group");
-        const state = api.getState();
-        const ext = getEquipmentState(state);
-
-        const pool =
-          group === "production" ? productionEquipment : promoEquipment;
-        const def = pool.find(x => x.id === id);
-        if (!def) return;
-        if (ext.owned[def.id]) return;
-
-        if (state.cash < def.cost) {
-          api.pushLog("Not enough cash for " + def.name + ".", "bad");
-          return;
-        }
-
-        state.cash -= def.cost;
-        state.stats.expenses += def.cost;
-        state.monthly.expenses += def.cost;
-        ext.owned[def.id] = true;
-        ext.spent += def.cost;
-
-        def.apply(state);
-        api.pushLog("Installed equipment: " + def.name + ".", "good");
-      };
-
-      if (equipList) {
-        equipList.addEventListener("click", clickHandler);
-      }
-      if (promoList) {
-        promoList.addEventListener("click", clickHandler);
-      }
+      // Example for later:
+      // const rivalsGrid = api.D('rivalsGrid');
+      // if (!rivalsGrid) return;
+      // rivalsGrid.addEventListener('click', (e) => {
+      //   const btn = e.target.closest('[data-rival-action]');
+      //   if (!btn) return;
+      //   const action = btn.getAttribute('data-rival-action');
+      //   const rivalId = btn.getAttribute('data-rival-id');
+      //   // game.js can react to this via a public API.
+      // });
     },
 
     onUpdateUI(api) {
+      if (!api || !api.getState) return;
       const state = api.getState();
-      const ext = getEquipmentState(state);
+      if (!state) return;
 
-      const equipList = api.D("equipmentList");
-      const promoList = api.D("promoList");
-      const summaryEl = api.D("equipmentSummary");
+      const rivalsState = ensureRivalsState(state);
 
-      if (equipList) {
-        renderList(api, equipList, productionEquipment, ext.owned, "production");
-      }
-      if (promoList) {
-        renderList(api, promoList, promoEquipment, ext.owned, "promo");
-      }
-
-      if (summaryEl) {
-        const ownedCount = Object.keys(ext.owned).length;
-        summaryEl.textContent =
-          ownedCount === 0
-            ? "No special equipment installed yet."
-            : ownedCount +
-              " upgrade(s) installed • Total invested: " +
-              api.formatMoney(ext.spent);
-      }
+      // Do NOT overwrite what game.js already rendered.
+      // Only show our basic cards if grid is empty.
+      renderFallbackRivals(api, rivalsState);
     }
   };
 
