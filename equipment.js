@@ -1,6 +1,7 @@
 (function () {
   if (!window.CokeExt || typeof window.CokeExt.register !== "function") return;
 
+  // --------- FACTORY / PRODUCTION EQUIPMENT ---------
   const productionEquipment = [
     {
       id: "neck_trimmer",
@@ -35,6 +36,7 @@
     }
   ];
 
+  // --------- FIELD / PROMO EQUIPMENT ---------
   const promoEquipment = [
     {
       id: "cooler_fridge",
@@ -68,6 +70,7 @@
     }
   ];
 
+  // --------- STATE HELPERS ---------
   function getEquipmentState(state) {
     if (!state.ext) state.ext = {};
     if (!state.ext.equipmentExt) {
@@ -79,6 +82,7 @@
     return state.ext.equipmentExt;
   }
 
+  // --------- RENDERING ---------
   function renderList(api, listEl, items, ownedMap, group) {
     listEl.innerHTML = "";
     const state = api.getState();
@@ -128,10 +132,11 @@
     });
   }
 
+  // --------- EXTENSION HANDLER ---------
   const handler = {
     onInit(api) {
       const state = api.getState();
-      getEquipmentState(state); // just ensure ext structure
+      getEquipmentState(state); // ensure ext structure exists
     },
 
     onBindEvents(api) {
@@ -144,6 +149,7 @@
         if (!btn) return;
         const id = btn.getAttribute("data-equip-id");
         const group = btn.getAttribute("data-equip-group");
+
         const state = api.getState();
         const ext = getEquipmentState(state);
 
@@ -154,9 +160,13 @@
         if (ext.owned[def.id]) return;
 
         if (state.cash < def.cost) {
-          api.pushLog("Not enough cash for " + def.name + ".", "bad");
+          api.pushLog("Not enough cash for " + def.name + ".", "bad", "fin");
           return;
         }
+
+        // Defensive: ensure stats & monthly containers exist
+        if (!state.stats) state.stats = { income: 0, expenses: 0, profit: 0 };
+        if (!state.monthly) state.monthly = { income: 0, expenses: 0 };
 
         state.cash -= def.cost;
         state.stats.expenses += def.cost;
@@ -165,7 +175,7 @@
         ext.spent += def.cost;
 
         def.apply(state);
-        api.pushLog("Installed equipment: " + def.name + ".", "good");
+        api.pushLog("Installed equipment: " + def.name + ".", "good", "ops");
       };
 
       if (equipList) {
