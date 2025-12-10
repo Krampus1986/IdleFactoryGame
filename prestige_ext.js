@@ -1,4 +1,6 @@
 (function () {
+  'use strict';
+
   if (!window.CokeExt || typeof window.CokeExt.register !== "function") return;
 
   const prestigeNodes = [
@@ -8,7 +10,10 @@
       cost: 1,
       desc: "Auto-buy is always available, even in fresh runs.",
       apply(state) {
+        if (!state) return;
+        if (!state.flags) state.flags = {};
         state.flags.autoBuy = true;
+
         if (!state.purchasedUpgrades) state.purchasedUpgrades = {};
         state.purchasedUpgrades["auto_buy"] = true;
       }
@@ -19,6 +24,10 @@
       cost: 2,
       desc: "+300 base storage capacity every new run.",
       apply(state) {
+        if (!state) return;
+        if (typeof state.storageCapacity !== "number") {
+          state.storageCapacity = Number(state.storageCapacity || 0);
+        }
         state.storageCapacity += 300;
       }
     },
@@ -28,6 +37,10 @@
       cost: 2,
       desc: "Permanent +5% demand modifier.",
       apply(state) {
+        if (!state) return;
+        if (typeof state.demandModifier !== "number" || !isFinite(state.demandModifier)) {
+          state.demandModifier = 1;
+        }
         state.demandModifier *= 1.05;
       }
     },
@@ -37,6 +50,10 @@
       cost: 3,
       desc: "Permanent +15 bottles/hour capacity.",
       apply(state) {
+        if (!state) return;
+        if (typeof state.capacityPerHour !== "number") {
+          state.capacityPerHour = Number(state.capacityPerHour || 0);
+        }
         state.capacityPerHour += 15;
       }
     }
@@ -50,30 +67,44 @@
         spent: 0
       };
     }
+    if (!state.ext.prestigeExt.unlocked) {
+      state.ext.prestigeExt.unlocked = {};
+    }
+    if (typeof state.ext.prestigeExt.spent !== "number") {
+      state.ext.prestigeExt.spent = Number(state.ext.prestigeExt.spent || 0);
+    }
     return state.ext.prestigeExt;
   }
 
   function getAvailablePoints(state, ext) {
-    const total = Math.floor(state.brandLegacy || 0);
-    return Math.max(0, total - (ext.spent || 0));
+    if (!state) return 0;
+    ext = ext || (state.ext && state.ext.prestigeExt) || { spent: 0 };
+    const total = Math.floor(Number(state.brandLegacy || 0));
+    return Math.max(0, total - Number(ext.spent || 0));
   }
 
   const handler = {
     onInit(api) {
+      if (!api || !api.getState) return;
       const state = api.getState();
+      if (!state) return;
       ensurePrestigeExt(state);
     },
 
     onBindEvents(api) {
+      if (!api || !api.D || !api.getState || !api.pushLog) return;
+
       const listEl = api.D("prestigeUpgradesList");
       if (!listEl) return;
 
       listEl.addEventListener("click", e => {
         const btn = e.target.closest("button[data-prestige-id]");
         if (!btn) return;
-        const id = btn.getAttribute("data-prestige-id");
 
+        const id = btn.getAttribute("data-prestige-id");
         const state = api.getState();
+        if (!state) return;
+
         const ext = ensurePrestigeExt(state);
         const node = prestigeNodes.find(n => n.id === id);
         if (!node) return;
@@ -96,19 +127,33 @@
     },
 
     onUpdateUI(api) {
+      if (!api || !api.D || !api.getState) return;
+
       const state = api.getState();
+      if (!state) return;
+
       const ext = ensurePrestigeExt(state);
       const listEl = api.D("prestigeUpgradesList");
       const infoEl = api.D("prestigePointsInfo");
+      const summaryEl = api.D("prestigePointsSummary");
+
       if (!listEl) return;
 
       const points = getAvailablePoints(state, ext);
+      const legacyRaw = Number(state.brandLegacy || 0);
+      const legacyMultiplier = 1 + legacyRaw * 0.2;
+
       if (infoEl) {
         infoEl.textContent =
           "Prestige points: " +
           points +
           " • Legacy level: x" +
-          (1 + (state.brandLegacy || 0) * 0.2).toFixed(1);
+          legacyMultiplier.toFixed(1);
+      }
+
+      // Header summary: "X available"
+      if (summaryEl) {
+        summaryEl.textContent = points + " available";
       }
 
       listEl.innerHTML = "";
@@ -120,8 +165,10 @@
 
         const main = document.createElement("div");
         main.className = "chip-main";
+
         const title = document.createElement("span");
         title.textContent = node.name;
+
         const cost = document.createElement("span");
         cost.textContent = owned
           ? "Unlocked"
@@ -131,8 +178,10 @@
 
         const sub = document.createElement("div");
         sub.className = "chip-sub";
+
         const desc = document.createElement("span");
         desc.textContent = node.desc;
+
         const actions = document.createElement("div");
         if (!owned) {
           const btn = document.createElement("button");
