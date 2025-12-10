@@ -823,3 +823,21 @@ input[type="range"]::-moz-range-thumb {
     padding-inline: 10px;
   }
 }
+
+/* Prestige layout tweak + hard reset button */
+
+.prestige-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.prestige-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+}
