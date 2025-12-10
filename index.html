@@ -10,60 +10,37 @@
   <!-- SVG sprite for simple icons -->
   <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
     <symbol id="icon-bottle" viewBox="0 0 32 32">
-      <path d="M13 3a1 1 0 0 1 1-1h4a1 1 0 0 1 .93.63l1 2.5A1 1 0 0 1 20 6v4.53a5.62 5.62 0 0 0 1.12 3.36l1.47 1.96A4 4 0 0 1 23 19v8a2 2 0 0 1-2 2H11a2 2 0 0 1-2-2v-8a4 4 0 0 1 .41-1.77l1.47-1.96A5.62 5.62 0 0 0 12 10.53V6a1 1 0 0 1 .07-.37z"/>
+      <path d="M13 3a1 1 0 0 1 1-1h4a1 1 0 0 1 .93.63l1 2.5A1 1 0 0 1 20 6v4.53a5.62 5.62 0 0 0 1.3 3.56l1.47 1.96A4 4 0 0 1 23.5 18.8l-1.38 8.3A3 3 0 0 1 19.16 30H14.8a3 3 0 0 1-2.96-2.55L10.5 18.8a4 4 0 0 1 .73-2.75l1.47-1.96A5.62 5.62 0 0 0 13 10.53V6a1 1 0 0 1 .07-.37z"/>
     </symbol>
     <symbol id="icon-factory" viewBox="0 0 32 32">
       <path d="M5 6a2 2 0 0 1 2-2h2l1-2h2v10l5-4 5 4v-3h3v15h-2v3H4v-3H2V14h3zM6 16v8h3v-8zm6 0v8h3v-8zm6 0v8h3v-8z"/>
     </symbol>
-    <symbol id="icon-coin" viewBox="0 0 32 32">
-      <path d="M16 4C9.9 4 5 7.1 5 11v10c0 3.9 4.9 7 11 7s11-3.1 11-7V11c0-3.9-4.9-7-11-7zm0 2c5 0 9 2.2 9 5s-4 5-9 5-9-2.2-9-5 4-5 9-5zm-9 7.7C8.9 15.6 12.2 17 16 17s7.1-1.4 9-3.3V21c0 2.8-4 5-9 5s-9-2.2-9-5z"/>
+    <symbol id="icon-rocket" viewBox="0 0 32 32">
+      <path d="M16 2c4.8 0 8 2.5 8 7.5 0 3-1.5 6.5-4.5 10.5l-3.5 4.5-3.5-4.5C9.5 16 8 12.5 8 9.5 8 4.5 11.2 2 16 2zm0 4a3 3 0 1 0 3 3 3 3 0 0 0-3-3zM7 19l3 7-4-3-3 2 2-6z"/>
     </symbol>
-    <symbol id="icon-flame" viewBox="0 0 32 32">
-      <path d="M17 3c.6 3-1.2 4.8-2.8 7.1C12.6 12.8 11 15.1 11 18a5 5 0 0 0 10 0c0-1.6-.4-2.8-1-3.9.9.4 1.7 1 2.4 1.7A7.9 7.9 0 0 1 23 22a7 7 0 0 1-14 0c0-3.7 2-6.3 3.9-8.7S16.4 10 16 7.2A4.8 4.8 0 0 1 17 3z"/>
+    <symbol id="icon-coin" viewBox="0 0 32 32">
+      <path d="M16 4C9.9 4 5 7.1 5 11v10c0 3.9 4.9 7 11 7s11-3.1 11-7V11c0-3.9-4.9-7-11-7zm0 2c5 0 9 2.2 9 5s-4 5-9 5-9-2.2-9-5 4-5 9-5zm-9 8.3C8.6 15.9 12.1 17 16 17s7.4-1.1 9-2.7V21c0 2.8-4 5-9 5s-9-2.2-9-5z"/>
+    </symbol>
+    <symbol id="icon-trophy" viewBox="0 0 32 32">
+      <path d="M8 4h16v4a5 5 0 0 1-4 4.9V15a4 4 0 0 1-3 3.87V21h3a2 2 0 0 1 2 2v1H10v-1a2 2 0 0 1 2-2h3v-2.13A4 4 0 0 1 12 15v-2.1A5 5 0 0 1 8 8.1zm2 2v2a3 3 0 0 0 2.82 3H19.2A3 3 0 0 0 22 8V6zm-4 1h2v2a5 5 0 0 0 .38 1.92A3 3 0 0 1 6 8zm18 0a3 3 0 0 1-2.38 2.92A5 5 0 0 0 24 9z"/>
+    </symbol>
+    <symbol id="icon-chart" viewBox="0 0 32 32">
+      <path d="M6 26V6h2v18h18v2H6zm4-4V10h2v12zm4 0V6h2v16zm4 0V14h2v8z"/>
     </symbol>
   </svg>
 
-  <!-- Global event / recap popup -->
-  <div
-    class="event-popup hidden info"
-    id="eventPopup"
-    role="dialog"
-    aria-modal="true"
-    aria-labelledby="eventPopupTitle"
-  >
-    <div class="event-dialog">
-      <button
-        class="event-close"
-        id="eventPopupClose"
-        type="button"
-        aria-label="Close event message"
-      >
-        ×
-      </button>
-      <div class="event-title" id="eventPopupTitle">Event</div>
-      <div class="event-body" id="eventPopupText">
-        <!-- filled by JS -->
-      </div>
-      <div class="event-actions">
-        <button class="btn primary" type="button" id="eventPopupOk">
-          Okay
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <div class="app">
-    <header class="topbar">
-      <div class="brand-chunk" aria-label="Coke Tycoon Idle header">
-        <div class="brand-logo">
-          <svg aria-hidden="true">
-            <use href="#icon-bottle" xlink:href="#icon-bottle"></use>
+  <div class="page">
+    <header class="topbar" aria-label="Game status header">
+      <div class="topbar-left">
+        <div class="brand">
+          <svg class="brand-logo" aria-hidden="true">
+            <use href="#icon-bottle"></use>
           </svg>
-        </div>
-        <div class="brand-text">
-          <div class="brand-title">Coke Tycoon Idle</div>
-          <div class="brand-sub">
-            Buy preforms, build bottling lines, win the shelf war.
+          <div>
+            <h1 class="brand-title">Coke Tycoon Idle</h1>
+            <p class="brand-subtitle">
+              Run a bottling line, fight for market share, and build a cola empire.
+            </p>
           </div>
         </div>
       </div>
@@ -78,21 +55,35 @@
         <div class="pill">
           <div>
             <div>
-              <strong><span id="dayDisplay">1</span></strong> •
-              <strong><span id="timeDisplay">08:00</span></strong>
+              <strong><span id="dayDisplay">Day 1</span></strong>
             </div>
-            <small>Day • Factory clock</small>
+            <small>Calendar</small>
           </div>
         </div>
         <div class="pill">
           <div>
-            <div><strong><span id="legacyDisplay">x1.0</span></strong></div>
-            <small>Brand legacy</small>
+            <div>
+              <strong><span id="timeDisplay">08:00</span></strong>
+            </div>
+            <small>Shift time</small>
           </div>
         </div>
-        <button class="btn ghost" id="newGameButton" type="button">
-          New game
-        </button>
+        <div class="pill">
+          <div>
+            <div><strong id="capacityPill">0</strong></div>
+            <small>Capacity / hr</small>
+          </div>
+        </div>
+        <div class="pill soft">
+          <div>
+            <div>
+              <strong>
+                <span id="legacyPointsDisplay">0</span> LP
+              </strong>
+            </div>
+            <small>Brand legacy points</small>
+          </div>
+        </div>
       </div>
     </header>
 
@@ -107,9 +98,9 @@
             </div>
             <div class="card-pill">
               <svg class="icon" aria-hidden="true">
-                <use href="#icon-factory" xlink:href="#icon-factory"></use>
+                <use href="#icon-factory"></use>
               </svg>
-              Bottling line
+              <span>Lines & Warehouse</span>
             </div>
           </div>
           <div class="card-body">
@@ -117,11 +108,11 @@
               <div class="subheading">Production overview</div>
               <div class="stat-row">
                 <div class="stat">
-                  <span class="label">Capacity/hr</span>
+                  <span class="label">Capacity / hr</span>
                   <span class="value" id="capacityDisplay">0</span>
                 </div>
                 <div class="stat">
-                  <span class="label">Last hour</span>
+                  <span class="label">Last hour produced</span>
                   <span class="value" id="lastProducedDisplay">0</span>
                 </div>
                 <div class="stat">
@@ -187,106 +178,141 @@
                 </div>
                 <div class="chip">
                   <div class="chip-main">
-                    <strong>Finished bottles</strong>
-                    <span id="invBottles">0 / 300</span>
+                    <strong>Bottles in stock</strong>
+                    <span id="invBottles">0</span>
                   </div>
                   <div class="chip-sub">
-                    <span class="badge" id="demandHint">Demand: calm</span>
-                    <span>Ready to ship.</span>
+                    <span>Ready to sell.</span>
+                    <div>
+                      <span>Warehouse cap:</span>
+                      <strong id="storageCapacityDisplay">0</strong>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
 
-            <div>
-              <div class="subheading">Automation</div>
-              <div class="flex-row">
-                <div class="badge-row">
-                  <span class="badge" id="autoBuyStatus">Auto-buy: off</span>
-                  <span class="badge" id="rivalStatus">Rivals: sleeping</span>
+              <div class="chip chip--soft">
+                <div class="chip-main">
+                  <strong>Auto-supply</strong>
+                  <span id="autoBuyStatus">Off</span>
+                </div>
+                <div class="chip-sub">
+                  <span>Automatically buys preforms, labels, and packaging when stock is low.</span>
+                  <button class="btn" id="autoBuyToggle" type="button">
+                    Toggle auto-buy
+                  </button>
                 </div>
               </div>
             </div>
           </div>
         </section>
 
-        <!-- Market & Pricing -->
-        <section class="card" aria-labelledby="marketTitle">
+        <!-- Pricing & Market -->
+        <section class="card" aria-labelledby="pricingTitle">
           <div class="card-header">
-            <div class="card-title" id="marketTitle">
-              Market & Pricing
+            <div class="card-title" id="pricingTitle">
+              Pricing & Market
             </div>
             <div class="card-pill">
               <svg class="icon" aria-hidden="true">
-                <use href="#icon-coin" xlink:href="#icon-coin"></use>
+                <use href="#icon-coin"></use>
               </svg>
-              Consumer pricing
+              <span>Demand & rivals</span>
             </div>
           </div>
           <div class="card-body">
-            <div>
-              <div class="subheading">Active flavor</div>
-              <div class="flavors-row" id="flavorsRow">
-                <!-- filled by JS -->
+            <div class="subheading">Active flavor</div>
+            <div class="flavor-switcher">
+              <button class="btn ghost" id="prevFlavorButton" type="button" aria-label="Previous flavor">
+                ◀
+              </button>
+              <div class="flavor-info">
+                <div class="flavor-name" id="activeFlavorName">Classic Cola</div>
+                <div class="flavor-meta" id="activeFlavorStats">
+                  Lifetime produced: 0 | Lifetime sold: 0
+                </div>
+              </div>
+              <button class="btn ghost" id="nextFlavorButton" type="button" aria-label="Next flavor">
+                ▶
+              </button>
+            </div>
+
+            <div class="subheading">Price tuning</div>
+            <div class="price-row" aria-label="Price per bottle">
+              <button class="btn ghost" id="decreasePriceButton" type="button" aria-label="Decrease price">
+                −
+              </button>
+              <div class="price-display">
+                <span class="label">Price per bottle</span>
+                <strong id="priceDisplay">$2.00</strong>
+              </div>
+              <button class="btn ghost" id="increasePriceButton" type="button" aria-label="Increase price">
+                +
+              </button>
+            </div>
+
+            <div class="market-hints">
+              <div class="hint">
+                <strong>Demand</strong>
+                <span id="demandHint">Normal</span>
+              </div>
+              <div class="hint">
+                <strong>Rivals</strong>
+                <span id="rivalHint">Watching your price...</span>
               </div>
             </div>
 
-            <div>
-              <div class="subheading">Retail price per bottle</div>
-              <div class="price-row">
-                <div>
-                  <div class="stat">
-                    <span class="label">Your price</span>
-                    <span class="value" id="priceDisplay">$0.00</span>
-                  </div>
-                  <div class="stat">
-                    <span class="label">Market avg</span>
-                    <span class="value" id="marketPriceDisplay">$0.00</span>
-                  </div>
+            <div class="chart-like" aria-label="Market gauges">
+              <div class="chart-row">
+                <span>Demand level</span>
+                <div class="bar">
+                  <div class="bar-fill" id="demandBar"></div>
                 </div>
-                <div class="range-wrap">
-                  <label for="priceSlider">
-                    Drag to adjust price (higher = more margin, lower = more demand).
-                  </label>
-                  <input id="priceSlider" type="range" min="0.5" max="5" step="0.05" />
+              </div>
+              <div class="chart-row">
+                <span>Market share</span>
+                <div class="bar">
+                  <div class="bar-fill bar-fill--accent" id="shareBar"></div>
                 </div>
               </div>
             </div>
+          </div>
+        </section>
 
-            <div>
-              <div class="subheading">Demand & competition</div>
-              <div class="stat-row">
-                <div class="stat">
-                  <span class="label">Demand level</span>
-                  <span class="value" id="demandLevelDisplay">0%</span>
-                </div>
-                <div class="stat">
-                  <span class="label">Market share</span>
-                  <span class="value" id="marketShareDisplay">100%</span>
-                </div>
-                <div class="stat">
-                  <span class="label">Rival price</span>
-                  <span class="value" id="rivalPriceDisplay">–</span>
-                </div>
-              </div>
+        <!-- Adventures -->
+        <section class="card" aria-labelledby="adventuresTitle">
+          <div class="card-header">
+            <div class="card-title" id="adventuresTitle">
+              Adventures & Campaigns
+            </div>
+            <div class="card-pill">
+              <svg class="icon" aria-hidden="true">
+                <use href="#icon-rocket"></use>
+              </svg>
+              <span>RPG-style missions</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="subheading">Active crew</div>
+            <div class="crew-grid" id="crewGrid">
+              <!-- filled by JS -->
             </div>
 
-            <div>
-              <div class="subheading">Lifetime finances</div>
-              <div class="stat-row">
-                <div class="stat">
-                  <span class="label">Bottles sold</span>
-                  <span class="value" id="soldDisplay">0</span>
-                </div>
-                <div class="stat">
-                  <span class="label">Revenue</span>
-                  <span class="value" id="revenueDisplay">$0.00</span>
-                </div>
-                <div class="stat">
-                  <span class="label">Expenses</span>
-                  <span class="value" id="expensesDisplay">$0.00</span>
-                </div>
-              </div>
+            <div class="subheading">Missions</div>
+            <div class="missions-grid" id="missionsGrid">
+              <!-- filled by JS -->
+            </div>
+
+            <div class="subheading">Active mission</div>
+            <div class="mission-active" id="activeMissionPanel">
+              <!-- filled by JS -->
+            </div>
+
+            <div class="mission-footer">
+              <button class="btn" id="adventureClaimButton" type="button" disabled>
+                Claim rewards
+              </button>
+              <small id="adventureStatusText">No mission active.</small>
             </div>
           </div>
         </section>
@@ -294,61 +320,93 @@
 
       <!-- RIGHT COLUMN -->
       <div class="column">
-        <!-- Growth & Prestige -->
-        <section class="card" aria-labelledby="growthTitle">
+        <!-- Rivals & Channels -->
+        <section class="card" aria-labelledby="rivalsTitle">
           <div class="card-header">
-            <div class="card-title" id="growthTitle">
-              Growth & Prestige
+            <div class="card-title" id="rivalsTitle">
+              Rivals & Channels
             </div>
             <div class="card-pill">
               <svg class="icon" aria-hidden="true">
-                <use href="#icon-flame" xlink:href="#icon-flame"></use>
+                <use href="#icon-chart"></use>
               </svg>
-              Compounding growth
+              <span>Territory split</span>
             </div>
           </div>
           <div class="card-body">
-            <div>
-              <div class="subheading">Upgrades</div>
-              <div class="upgrades-list" id="upgradesList">
-                <!-- upgrades injected by JS -->
-              </div>
+            <div class="subheading">Territory split</div>
+            <div class="channels-grid" id="channelsGrid">
+              <!-- filled by JS -->
             </div>
 
-            <div>
-              <div class="subheading">Prestige</div>
-              <div class="flex-row">
-                <div class="badge-row">
-                  <span class="badge warn" id="prestigeHint">
-                    Earn $250,000 total revenue to unlock Brand Legacy.
-                  </span>
-                </div>
-                <button class="btn danger" id="prestigeButton" disabled type="button">
-                  Rebrand & restart
-                </button>
-              </div>
+            <div class="subheading">Rival strategies</div>
+            <div class="rivals-grid" id="rivalsGrid">
+              <!-- filled by JS -->
+            </div>
+          </div>
+        </section>
+
+        <!-- Equipment -->
+        <section class="card" aria-labelledby="equipmentTitle">
+          <div class="card-header">
+            <div class="card-title" id="equipmentTitle">
+              Equipment & Loadouts
+            </div>
+            <div class="card-pill">
+              <svg class="icon" aria-hidden="true">
+                <use href="#icon-factory"></use>
+              </svg>
+              <span>Factory & field gear</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="subheading">Factory line equipment</div>
+            <div class="equipment-grid" id="equipmentList">
+              <!-- filled by equipment.js (productionEquipment) -->
             </div>
 
-            <div>
-              <div class="subheading">Adventures</div>
-              <div class="chip" id="adventureBox">
-                <div class="chip-main">
-                  <strong>No active campaign</strong>
-                  <span>Equip your factory with a campaign to boost growth.</span>
-                </div>
-              </div>
-              <div style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap;">
-                <button class="btn ghost" id="adventureStartStadium" type="button">
-                  Launch stadium promotion
-                </button>
-              </div>
+            <div class="subheading">Field & promo gear</div>
+            <div class="equipment-grid" id="promoList">
+              <!-- filled by equipment.js (promoEquipment) -->
             </div>
 
-            <div>
-              <div class="subheading">Achievements</div>
-              <div class="achievements-list" id="achievementsList">
-                <!-- achievements injected -->
+            <div class="chip chip--soft" style="margin-top:0.5rem;">
+              <div class="chip-main">
+                <strong>Equipment summary</strong>
               </div>
+              <div class="chip-sub">
+                <span id="equipmentSummary">No special equipment installed yet.</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Prestige -->
+        <section class="card" aria-labelledby="prestigeTitle">
+          <div class="card-header">
+            <div class="card-title" id="prestigeTitle">
+              Brand Legacy Boardroom
+            </div>
+            <div class="card-pill">
+              <svg class="icon" aria-hidden="true">
+                <use href="#icon-trophy"></use>
+              </svg>
+              <span>Prestige tree</span>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="prestige-header">
+              <div>
+                <div class="subheading">Legacy points</div>
+                <div id="prestigePointsSummary">0 available</div>
+              </div>
+              <button class="btn danger" id="prestigeResetButton" type="button">
+                Prestige reset
+              </button>
+            </div>
+
+            <div class="prestige-tree" id="prestigeTree">
+              <!-- filled by prestige_ext.js -->
             </div>
           </div>
         </section>
@@ -357,12 +415,28 @@
         <section class="card" aria-labelledby="logTitle">
           <div class="card-header">
             <div class="card-title" id="logTitle">
-              Board Feed
+              Board feed & alerts
             </div>
-            <div class="card-pill">Events & milestones</div>
           </div>
           <div class="card-body">
-            <div class="log" id="logBox" aria-live="polite" aria-atomic="false">
+            <div class="log-filters" aria-label="Log filters">
+              <button class="chip chip--soft chip--active" data-log-filter="all" type="button">
+                All
+              </button>
+              <button class="chip chip--soft" data-log-filter="ops" type="button">
+                Ops
+              </button>
+              <button class="chip chip--soft" data-log-filter="fin" type="button">
+                Fin
+              </button>
+              <button class="chip chip--soft" data-log-filter="adv" type="button">
+                Adv
+              </button>
+              <button class="chip chip--soft" data-log-filter="rival" type="button">
+                Rival
+              </button>
+            </div>
+            <div class="log-list" id="logList" aria-live="polite">
               <!-- log entries -->
             </div>
           </div>
@@ -375,6 +449,12 @@
     </main>
   </div>
 
+  <script src="bottles.js"></script>
+  <script src="production.js"></script>
+  <script src="rivals.js"></script>
+  <script src="equipment.js"></script>
+  <script src="adventures_rpg.js"></script>
+  <script src="prestige_ext.js"></script>
   <script src="game.js"></script>
 </body>
 </html>
