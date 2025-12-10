@@ -945,6 +945,25 @@
     );
   }
 
+
+  function hardResetGame() {
+    try {
+      // Full wipe of save + offline tick marker
+      localStorage.removeItem("coke_tycoon_idle_save");
+      localStorage.removeItem("coke_tycoon_idle_last_tick");
+    } catch (e) {
+      console.error("Failed to clear save", e);
+    }
+
+    state = defaultState();
+    saveGame();
+    updateUI();
+    pushLog(
+      "New game started. Previous save data was wiped from this browser.",
+      "good"
+    );
+  }
+
   // --- Core tick ---
 
   function runSingleTick(online) {
@@ -1514,6 +1533,21 @@
             "bad"
           );
         }
+      });
+    }
+
+
+    const hardResetButton = D("hardResetButton");
+    if (hardResetButton) {
+      hardResetButton.addEventListener("click", () => {
+        const ok = window.confirm
+          ? window.confirm(
+              "Start a completely new game?
+\nThis will wipe the current save data stored in this browser."
+            )
+          : true;
+        if (!ok) return;
+        hardResetGame();
       });
     }
 
