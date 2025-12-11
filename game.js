@@ -21,7 +21,8 @@
       formatMoney,
       pushLog,
       constants: {
-        adventureDefs
+        adventureDefs,
+        channels
       },
       actions: {
         startAdventure(id) {
@@ -104,9 +105,9 @@
     }
   ];
 
-  // --- Rivals (static archetypes) ---
+  // --- Rival archetypes (from rivals.js via state.ext.rivals, with fallback) ---
 
-  const rivalDefs = [
+  const fallbackRivals = [
     {
       id: "discounters",
       name: "BudgetFizz",
@@ -144,6 +145,35 @@
       }
     }
   ];
+
+  function getRivalArchetypes() {
+    // Prefer rivals seeded by rivals.js in state.ext.rivals.roster
+    if (
+      state &&
+      state.ext &&
+      state.ext.rivals &&
+      Array.isArray(state.ext.rivals.roster) &&
+      state.ext.rivals.roster.length
+    ) {
+      return state.ext.rivals.roster.map(r => ({
+        id: r.id,
+        name: r.name,
+        // Map baseShare (0–1) into a reasonable brandPower range (~1.0–1.4)
+        brandPower: 1.0 + (r.baseShare || 0),
+        // Map priceAggression → riskTolerance
+        riskTolerance: clamp(0.2, 0.95, r.priceAggression || 0.5),
+        // For now, uniform channel strength – can be specialized later based on marketingFocus
+        channelStrength: {
+          supermarket: 1.0,
+          kiosk: 1.0,
+          vending: 1.0,
+          stadium: 1.0
+        }
+      }));
+    }
+    // Fallback to legacy internal rivals
+    return fallbackRivals;
+  }
 
   // --- Achievements & upgrades (existing design) ---
 
@@ -270,19 +300,24 @@
         : BASE_MARKET_PRICE;
 
     const rivalPrices = {};
-    rivalDefs.forEach(r => {
+    const rivals = getRivalArchetypes();
+    rivals.forEach(r => {
       const perChannel = {};
       channels.forEach(ch => {
         let target;
-        if (r.id === "discounters") {
+        // Simple behavioral mapping based on id / riskTolerance
+        if (r.id === "polar_fizz" || r.id === "discounters") {
+          // Aggressive discounter
           target = playerPrice * 0.9;
-        } else if (r.id === "premium") {
+        } else if (r.id === "royal_cola" || r.id === "premium") {
+          // Premium brand
           target = playerPrice * 1.3;
-        } else if (r.id === "copycat") {
+        } else if (r.id === "zen_bubble") {
+          // Trendy but not in a price war
+          target = playerPrice * 1.1;
+        } else {
           const mode = r.riskTolerance > 0.7 ? "undercut" : "shadow";
           target = mode === "undercut" ? playerPrice * 0.97 : playerPrice * 1.02;
-        } else {
-          target = playerPrice;
         }
         const wiggle = (Math.random() - 0.5) * 0.05 * playerPrice;
         perChannel[ch] = Math.max(0.3, target + wiggle);
@@ -298,6 +333,7 @@
     const result = {};
     const rivalPrices = state.rivalPrices || computeRivalPrices();
     const playerBrandPower = getBrandPower();
+    const rivals = getRivalArchetypes();
 
     channels.forEach(ch => {
       const demand = channelDemand[ch] || 0;
@@ -311,7 +347,7 @@
         channelStrength: 1.0
       });
 
-      rivalDefs.forEach(r => {
+      rivals.forEach(r => {
         const price =
           rivalPrices[r.id] && rivalPrices[r.id][ch]
             ? rivalPrices[r.id][ch]
@@ -341,7 +377,7 @@
 
       const playerShare = shares.player || 0;
       const rivalShares = {};
-      rivalDefs.forEach(r => {
+      rivals.forEach(r => {
         rivalShares[r.id] = shares[r.id] || 0;
       });
 
@@ -611,7 +647,7 @@
 
   function autoBuySupplies() {
     const targetPreforms = state.storageCapacity;
-    const targetLabels = state.storageCapacity;
+    the targetLabels = state.storageCapacity;
     const targetPackaging = state.storageCapacity;
 
     const buy = (kind, target, costPer) => {
@@ -922,10 +958,7 @@
   // --- Prestige (Brand Legacy) ---
 
   function canPrestige() {
-    return (
-      state.brandLegacy >= 1 &&
-      (state.stats.revenue || 0) >= 50000
-    );
+    return state.brandLegacy >= 1 && (state.stats.revenue || 0) >= 50000;
   }
 
   function doPrestigeReset() {
@@ -944,7 +977,6 @@
       "good"
     );
   }
-
 
   function hardResetGame() {
     try {
@@ -1009,8 +1041,7 @@
         (state.hour < 10 ? "0" + state.hour : state.hour) + ":00";
     if (capEl)
       capEl.textContent = getEffectiveCapacityPerHour().toLocaleString();
-    if (legacyEl)
-      legacyEl.textContent = (state.brandLegacy || 0).toFixed(2);
+    if (legacyEl) legacyEl.textContent = (state.brandLegacy || 0).toFixed(2);
   }
 
   function updateProductionUI() {
@@ -1107,6 +1138,7 @@
     if (channelsGrid || rivalsGrid) {
       const channelDemand = computeChannelDemand();
       const shares = computeMarketShares(channelDemand);
+      const rivals = getRivalArchetypes();
 
       if (channelsGrid) {
         channelsGrid.innerHTML = "";
@@ -1136,7 +1168,7 @@
 
       if (rivalsGrid) {
         rivalsGrid.innerHTML = "";
-        rivalDefs.forEach(r => {
+        rivals.forEach(r => {
           const box = document.createElement("div");
           box.className = "chip";
           const main = document.createElement("div");
@@ -1149,18 +1181,20 @@
             "</span>";
           const sub = document.createElement("div");
           sub.className = "chip-sub";
-          const shareLines = channels.map(ch => {
-            const info = shares[ch];
-            if (!info) return "";
-            const rivalShare = info.rivalShares[r.id] || 0;
-            return (
-              ch.charAt(0).toUpperCase() +
-              ch.slice(1) +
-              ": " +
-              Math.round(rivalShare * 100) +
-              "%"
-            );
-          });
+          const shareLines = channels
+            .map(ch => {
+              const info = shares[ch];
+              if (!info) return "";
+              const rivalShare = info.rivalShares[r.id] || 0;
+              return (
+                ch.charAt(0).toUpperCase() +
+                ch.slice(1) +
+                ": " +
+                Math.round(rivalShare * 100) +
+                "%"
+              );
+            })
+            .filter(Boolean);
           sub.textContent = shareLines.join(" • ");
           box.appendChild(main);
           box.appendChild(sub);
@@ -1171,10 +1205,9 @@
   }
 
   function updatePrestigeUI() {
-    const pointsSummary = D("prestigePointsSummary");
-    if (!pointsSummary) return;
-    pointsSummary.textContent =
-      (state.brandLegacy || 0).toFixed(2) + " available";
+    // Topbar already shows Brand Legacy; detailed prestige points & summary
+    // are handled by prestige_ext.js via the extension system.
+    // This is intentionally left blank to avoid fighting the extension.
   }
 
   function renderFlavors() {
@@ -1420,7 +1453,11 @@
     renderAdventureUI();
 
     // Let extension modules refresh their UI
-    if (window.CokeExt && Array.isArray(window.CokeExt.handlers) && window.CokeExt.handlers.length) {
+    if (
+      window.CokeExt &&
+      Array.isArray(window.CokeExt.handlers) &&
+      window.CokeExt.handlers.length
+    ) {
       const api = buildExtensionApi();
       callExtensions("onUpdateUI", api);
     }
@@ -1436,10 +1473,7 @@
         if (!btn) return;
         const kind = btn.getAttribute("data-buy");
         const amount = parseInt(btn.getAttribute("data-amount"), 10) || 0;
-        if (
-          !["preforms", "labels", "packaging"].includes(kind) ||
-          amount <= 0
-        ) {
+        if (!["preforms", "labels", "packaging"].includes(kind) || amount <= 0) {
           return;
         }
         const costPer = SUPPLY_COST[kind];
@@ -1536,14 +1570,12 @@
       });
     }
 
-
     const hardResetButton = D("hardResetButton");
     if (hardResetButton) {
       hardResetButton.addEventListener("click", () => {
         const ok = window.confirm
           ? window.confirm(
-              "Start a completely new game?
-\nThis will wipe the current save data stored in this browser."
+              "Start a completely new game?\n\nThis will wipe the current save data stored in this browser."
             )
           : true;
         if (!ok) return;
@@ -1561,13 +1593,8 @@
           const list = D("logList");
           if (!list) return;
           Array.from(list.children).forEach(item => {
-            if (filter === "all") {
-              item.style.display = "";
-            } else if (filter === "ops") {
-              item.style.display = "";
-            } else {
-              item.style.display = "";
-            }
+            // Current filters are visual only; you can wire types later
+            item.style.display = "";
           });
         });
       });
@@ -1589,7 +1616,11 @@
     bindEvents();
 
     // Let extension modules initialize and bind their own events
-    if (window.CokeExt && Array.isArray(window.CokeExt.handlers) && window.CokeExt.handlers.length) {
+    if (
+      window.CokeExt &&
+      Array.isArray(window.CokeExt.handlers) &&
+      window.CokeExt.handlers.length
+    ) {
       const api = buildExtensionApi();
       callExtensions("onInit", api);
       callExtensions("onBindEvents", api);
