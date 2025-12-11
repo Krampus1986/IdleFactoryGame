@@ -2,6 +2,8 @@
   if (!window.CokeExt || typeof window.CokeExt.register !== "function") return;
 
   // --------- FACTORY / PRODUCTION EQUIPMENT ---------
+  // NOTE: Equipment IDs must be unique across ALL equipment types (production, promo, and mission)
+  // to prevent conflicts in the unified ownership tracking system.
   const productionEquipment = [
     {
       id: "neck_trimmer",
@@ -158,12 +160,17 @@
   }
 
   // --------- MISSION EQUIPMENT HELPERS ---------
-  function rollForEquipmentDrop() {
+  function rollForEquipmentDrop(state) {
+    const ext = getEquipmentState(state);
     const drops = [];
+    
+    // Only roll for equipment that hasn't been obtained yet
     missionEquipment.forEach(equip => {
-      const roll = Math.random();
-      if (roll <= equip.dropRate) {
-        drops.push(equip);
+      if (!ext.owned[equip.id]) {
+        const roll = Math.random();
+        if (roll <= equip.dropRate) {
+          drops.push(equip);
+        }
       }
     });
     return drops;

@@ -114,7 +114,7 @@
     // Roll for equipment drops
     const equipmentDrops = [];
     if (window.CokeGame && window.CokeGame.Equipment) {
-      const drops = window.CokeGame.Equipment.rollForEquipmentDrop();
+      const drops = window.CokeGame.Equipment.rollForEquipmentDrop(state);
       drops.forEach(equip => {
         const granted = window.CokeGame.Equipment.grantMissionEquipment(state, equip.id);
         if (granted) {

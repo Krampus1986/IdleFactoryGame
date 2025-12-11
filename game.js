@@ -960,7 +960,7 @@
     // Roll for equipment drops
     const equipmentDrops = [];
     if (window.CokeGame && window.CokeGame.Equipment && state.adventure.completedMissionId) {
-      const drops = window.CokeGame.Equipment.rollForEquipmentDrop();
+      const drops = window.CokeGame.Equipment.rollForEquipmentDrop(state);
       drops.forEach(equip => {
         const granted = window.CokeGame.Equipment.grantMissionEquipment(state, equip.id);
         if (granted) {
@@ -982,7 +982,8 @@
       logMsg += " Equipment obtained: " + equipmentDrops.map(e => e.name).join(", ") + "!";
       pushLog(logMsg, "good");
       equipmentDrops.forEach(equip => {
-        pushLog("Rare drop: " + equip.name + " (" + equip.rarity + ")!", "event");
+        const rarityLabel = equip.rarity.charAt(0).toUpperCase() + equip.rarity.slice(1);
+        pushLog(rarityLabel + " drop: " + equip.name + "!", "event");
       });
     } else {
       pushLog(logMsg, "good");
