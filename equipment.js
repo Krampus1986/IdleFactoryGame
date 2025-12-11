@@ -158,7 +158,7 @@
   }
 
   // --------- MISSION EQUIPMENT HELPERS ---------
-  function rollForEquipmentDrop(missionId) {
+  function rollForEquipmentDrop() {
     const drops = [];
     missionEquipment.forEach(equip => {
       const roll = Math.random();
@@ -173,7 +173,8 @@
     const ext = getEquipmentState(state);
     const equip = missionEquipment.find(e => e.id === equipmentId);
     
-    if (!equip || ext.missionEquipment[equipmentId]) {
+    // Check if equipment exists and is not already owned
+    if (!equip || ext.owned[equipmentId]) {
       return false;
     }
 
