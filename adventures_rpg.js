@@ -109,9 +109,27 @@
     state.cash = (state.cash || 0) + (reward.cash || 0);
     state.brandLegacy = (state.brandLegacy || 0) + (reward.legacy || 0);
     
+    // Roll for equipment drops
+    const equipmentDrops = [];
+    if (window.CokeGame && window.CokeGame.Equipment) {
+      const drops = window.CokeGame.Equipment.rollForEquipmentDrop(state.adventure.completedMissionId);
+      drops.forEach(equip => {
+        const granted = window.CokeGame.Equipment.grantMissionEquipment(state, equip.id);
+        if (granted) {
+          equipmentDrops.push(equip);
+        }
+      });
+    }
+    
+    // Store equipment drops in reward for display
+    if (equipmentDrops.length > 0) {
+      reward.equipment = equipmentDrops;
+    }
+    
     state.adventure.rewardPending = null;
     state.adventure.activeId = null;
     state.adventure.remainingHours = 0;
+    state.adventure.completedMissionId = null;
     
     // Clear localStorage
     try {
@@ -120,7 +138,12 @@
       console.error("Failed to clear mission state:", e);
     }
     
-    return true;
+    return {
+      success: true,
+      cash: reward.cash,
+      legacy: reward.legacy,
+      equipment: equipmentDrops
+    };
   }
 
   // Export public API

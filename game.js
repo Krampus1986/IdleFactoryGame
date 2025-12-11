@@ -432,7 +432,8 @@
       adventure: {
         activeId: null,
         remainingHours: 0,
-        rewardPending: null
+        rewardPending: null,
+        completedMissionId: null
       }
     };
   }
@@ -498,8 +499,12 @@
         state.adventure = {
           activeId: null,
           remainingHours: 0,
-          rewardPending: null
+          rewardPending: null,
+          completedMissionId: null
         };
+      }
+      if (typeof state.adventure.completedMissionId === "undefined") {
+        state.adventure.completedMissionId = null;
       }
       if (!state.achievementsUnlocked) {
         state.achievementsUnlocked = {};
@@ -933,6 +938,7 @@
         cash: def.reward.cash,
         legacy: def.reward.legacy
       };
+      state.adventure.completedMissionId = state.adventure.activeId;
       state.adventure.activeId = null;
       state.adventure.remainingHours = 0;
       pushLog(
@@ -947,17 +953,40 @@
   function claimAdventureReward() {
     const reward = state.adventure.rewardPending;
     if (!reward) return;
+    
     state.cash += reward.cash;
     state.brandLegacy += reward.legacy;
+    
+    // Roll for equipment drops
+    const equipmentDrops = [];
+    if (window.CokeGame && window.CokeGame.Equipment && state.adventure.completedMissionId) {
+      const drops = window.CokeGame.Equipment.rollForEquipmentDrop(state.adventure.completedMissionId);
+      drops.forEach(equip => {
+        const granted = window.CokeGame.Equipment.grantMissionEquipment(state, equip.id);
+        if (granted) {
+          equipmentDrops.push(equip);
+        }
+      });
+    }
+    
     state.adventure.rewardPending = null;
-    pushLog(
-      "Adventure rewards claimed: " +
-        formatMoney(reward.cash) +
-        " and +" +
-        reward.legacy.toFixed(2) +
-        " Brand Legacy.",
-      "good"
-    );
+    state.adventure.completedMissionId = null;
+    
+    let logMsg = "Adventure rewards claimed: " +
+      formatMoney(reward.cash) +
+      " and +" +
+      reward.legacy.toFixed(2) +
+      " Brand Legacy.";
+    
+    if (equipmentDrops.length > 0) {
+      logMsg += " Equipment obtained: " + equipmentDrops.map(e => e.name).join(", ") + "!";
+      pushLog(logMsg, "good");
+      equipmentDrops.forEach(equip => {
+        pushLog("Rare drop: " + equip.name + " (" + equip.rarity + ")!", "event");
+      });
+    } else {
+      pushLog(logMsg, "good");
+    }
   }
 
   // --- Prestige (Brand Legacy) ---
