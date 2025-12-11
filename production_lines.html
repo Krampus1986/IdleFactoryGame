@@ -1,80 +1,58 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <title>Coke Tycoon Idle – Production lines</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <link rel="stylesheet" href="styles.css"/>
+  <meta charset="utf-8" />
+  <title>Production Lines - Coke Tycoon Idle</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta name="description" content="Manage your production lines in Idle Factory." />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-<div class="page-root">
-  <header class="hero-card">
-    <div class="hero-main">
-      <div class="hero-title-row">
-        <div>
-          <h1 class="app-title">Coke Tycoon Idle</h1>
-          <p class="app-subtitle">Inspect and tune each bottling line.</p>
-        </div>
-        <div class="hero-top-pills">
-          <span class="pill pill-soft">Working capital <span id="cashDisplay"></span></span>
-          <span class="pill pill-soft">Day <span id="dayDisplay"></span></span>
-          <span class="pill pill-soft"><span id="timeDisplay"></span></span>
-          <span class="pill pill-soft"><span id="legacyPointsDisplay"></span> LP</span>
-        </div>
-      </div>
-      <nav class="hero-nav">
-        <a href="index.html" class="pill pill-soft">Dashboard</a>
-        <a href="production_lines.html" class="pill pill-soft">Production lines</a>
-        <a href="equipment.html" class="pill pill-soft">Equipment</a>
-        <a href="upgrades.html" class="pill pill-soft">Upgrades</a>
-      </nav>
-    </div>
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <symbol id="icon-factory" viewBox="0 0 32 32">
+      <path d="M5 6a2 2 0 0 1 2-2h2l1-2h2v10l5-4 5 4v-3h3v15h-2v3H4v-3H2V14h3zM6 16v8h3v-8zm6 0v8h3v-8zm6 0v8h3v-8z"/>
+    </symbol>
+  </svg>
+
+  <header class="page-header wrap" aria-label="Production header">
+    <h1>Production Lines</h1>
+    <nav class="page-nav" aria-label="Production navigation">
+      <a href="index.html">Home</a>
+      <a href="equipment.html">Equipment</a>
+      <a href="upgrades.html">Upgrades</a>
+    </nav>
   </header>
-  <main class="page-main">
 
-    <section class="card">
-      <div class="card-header">
-        <div class="card-title-row">
-          <h2>Production lines</h2>
-          <span class="pill pill-soft">Lines &amp; warehouse</span>
-        </div>
-      </div>
-      <div class="card-body">
-        <div class="metric-row">
-          <div class="metric">
-            <span class="metric-label">Total capacity / hr</span>
-            <span class="metric-value" id="capacityDisplay"></span>
-          </div>
-          <div class="metric">
-            <span class="metric-label">Last hour produced</span>
-            <span class="metric-value" id="lastProducedDisplay"></span>
-          </div>
-          <div class="metric">
-            <span class="metric-label">Lifetime produced</span>
-            <span class="metric-value" id="lifetimeProducedDisplay"></span>
-          </div>
-        </div>
-
-        <h3 class="section-label">Lines overview</h3>
-        <p class="muted">
-          Each card represents a bottling line. Future updates will let you assign workers,
-          equipment and specializations per line.
-        </p>
-        <div id="linesGrid" class="equipment-grid">
-          <!-- Filled by updateLinesUI() in game.js -->
-        </div>
+  <main class="wrap">
+    <section id="lines-container" class="panel">
+      <h2>Your Lines</h2>
+      <div id="lines">Loading production lines...</div>
+      <div class="actions">
+        <button id="add-line" class="btn primary" type="button">Add Production Line</button>
+        <button id="remove-line" class="btn ghost" type="button">Remove Line</button>
       </div>
     </section>
 
+    <section id="line-stats" class="panel">
+      <h2>Line Stats</h2>
+      <div id="line-stats-content">Select a line to view stats.</div>
+    </section>
   </main>
-  <footer class="page-footer">
-    <p class="muted">Progress is saved automatically in your browser.</p>
+
+  <footer class="site-footer wrap">
+    <nav aria-label="Footer navigation">
+      <a href="index.html">Back to Home</a>
+      <a href="equipment.html">Equipment</a>
+    </nav>
+    <small>&copy; Idle Factory Game</small>
   </footer>
-</div>
-<script src="game.js"></script>
-<script src="adventures_ext.js"></script>
-<script src="equipment_ext.js"></script>
-<script src="prestige_ext.js"></script>
-<script src="rivals.js"></script>
+
+  <noscript>
+    <p>This page requires JavaScript to function correctly.</p>
+  </noscript>
+
+  <script src="production.js" defer></script>
+  <script src="game.js" defer></script>
 </body>
 </html>
