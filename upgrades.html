@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <title>Coke Tycoon Idle – Upgrades</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <link rel="stylesheet" href="styles.css"/>
+</head>
+<body>
+<div class="page-root">
+  <header class="hero-card">
+    <div class="hero-main">
+      <div class="hero-title-row">
+        <div>
+          <h1 class="app-title">Coke Tycoon Idle</h1>
+          <p class="app-subtitle">Invest into lines, warehouses and demand multipliers.</p>
+        </div>
+        <div class="hero-top-pills">
+          <span class="pill pill-soft">Working capital <span id="cashDisplay"></span></span>
+          <span class="pill pill-soft">Day <span id="dayDisplay"></span></span>
+          <span class="pill pill-soft"><span id="timeDisplay"></span></span>
+          <span class="pill pill-soft"><span id="legacyPointsDisplay"></span> LP</span>
+        </div>
+      </div>
+      <nav class="hero-nav">
+        <a href="index.html" class="pill pill-soft">Dashboard</a>
+        <a href="production_lines.html" class="pill pill-soft">Production lines</a>
+        <a href="equipment.html" class="pill pill-soft">Equipment</a>
+        <a href="upgrades.html" class="pill pill-soft">Upgrades</a>
+      </nav>
+    </div>
+  </header>
+  <main class="page-main">
+
+    <section class="card">
+      <div class="card-header">
+        <div class="card-title-row">
+          <h2>Upgrades &amp; Investments</h2>
+          <span class="pill pill-soft">Core business upgrades</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <p class="muted">
+          Spend cash on structural upgrades that permanently boost capacity, storage, marketing and efficiency.
+        </p>
+        <div id="upgradesList" class="upgrade-list">
+          <!-- Filled by game.js renderUpgrades() -->
+        </div>
+      </div>
+    </section>
+
+  </main>
+  <footer class="page-footer">
+    <p class="muted">Progress is saved automatically in your browser.</p>
+  </footer>
+</div>
+<script src="game.js"></script>
+<script src="adventures_ext.js"></script>
+<script src="equipment_ext.js"></script>
+<script src="prestige_ext.js"></script>
+<script src="rivals.js"></script>
+</body>
+</html>

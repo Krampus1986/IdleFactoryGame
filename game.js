@@ -21,8 +21,7 @@
       formatMoney,
       pushLog,
       constants: {
-        adventureDefs,
-        channels
+        adventureDefs
       },
       actions: {
         startAdventure(id) {
@@ -105,9 +104,9 @@
     }
   ];
 
-  // --- Rival archetypes (from rivals.js via state.ext.rivals, with fallback) ---
+  // --- Rivals (static archetypes) ---
 
-  const fallbackRivals = [
+  const rivalDefs = [
     {
       id: "discounters",
       name: "BudgetFizz",
@@ -145,39 +144,6 @@
       }
     }
   ];
-
-  function clamp(min, max, v) {
-    return Math.min(max, Math.max(min, v));
-  }
-
-  function getRivalArchetypes() {
-    // Prefer rivals seeded by rivals.js in state.ext.rivals.roster
-    if (
-      state &&
-      state.ext &&
-      state.ext.rivals &&
-      Array.isArray(state.ext.rivals.roster) &&
-      state.ext.rivals.roster.length
-    ) {
-      return state.ext.rivals.roster.map(r => ({
-        id: r.id,
-        name: r.name,
-        // Map baseShare (0–1) into a reasonable brandPower range (~1.0–1.4)
-        brandPower: 1.0 + (r.baseShare || 0),
-        // Map priceAggression → riskTolerance
-        riskTolerance: clamp(0.2, 0.95, r.priceAggression || 0.5),
-        // For now, uniform channel strength – can be specialized later based on marketingFocus
-        channelStrength: {
-          supermarket: 1.0,
-          kiosk: 1.0,
-          vending: 1.0,
-          stadium: 1.0
-        }
-      }));
-    }
-    // Fallback to legacy internal rivals
-    return fallbackRivals;
-  }
 
   // --- Achievements & upgrades (existing design) ---
 
@@ -241,6 +207,10 @@
 
   // --- Helpers ---
 
+  function clamp(min, max, v) {
+    return Math.min(max, Math.max(min, v));
+  }
+
   function D(id) {
     return document.getElementById(id);
   }
@@ -300,24 +270,19 @@
         : BASE_MARKET_PRICE;
 
     const rivalPrices = {};
-    const rivals = getRivalArchetypes();
-    rivals.forEach(r => {
+    rivalDefs.forEach(r => {
       const perChannel = {};
       channels.forEach(ch => {
         let target;
-        // Simple behavioral mapping based on id / riskTolerance
-        if (r.id === "polar_fizz" || r.id === "discounters") {
-          // Aggressive discounter
+        if (r.id === "discounters") {
           target = playerPrice * 0.9;
-        } else if (r.id === "royal_cola" || r.id === "premium") {
-          // Premium brand
+        } else if (r.id === "premium") {
           target = playerPrice * 1.3;
-        } else if (r.id === "zen_bubble") {
-          // Trendy but not in a price war
-          target = playerPrice * 1.1;
-        } else {
+        } else if (r.id === "copycat") {
           const mode = r.riskTolerance > 0.7 ? "undercut" : "shadow";
           target = mode === "undercut" ? playerPrice * 0.97 : playerPrice * 1.02;
+        } else {
+          target = playerPrice;
         }
         const wiggle = (Math.random() - 0.5) * 0.05 * playerPrice;
         perChannel[ch] = Math.max(0.3, target + wiggle);
@@ -333,7 +298,6 @@
     const result = {};
     const rivalPrices = state.rivalPrices || computeRivalPrices();
     const playerBrandPower = getBrandPower();
-    const rivals = getRivalArchetypes();
 
     channels.forEach(ch => {
       const demand = channelDemand[ch] || 0;
@@ -347,7 +311,7 @@
         channelStrength: 1.0
       });
 
-      rivals.forEach(r => {
+      rivalDefs.forEach(r => {
         const price =
           rivalPrices[r.id] && rivalPrices[r.id][ch]
             ? rivalPrices[r.id][ch]
@@ -377,7 +341,7 @@
 
       const playerShare = shares.player || 0;
       const rivalShares = {};
-      rivals.forEach(r => {
+      rivalDefs.forEach(r => {
         rivalShares[r.id] = shares[r.id] || 0;
       });
 
@@ -469,11 +433,7 @@
         activeId: null,
         remainingHours: 0,
         rewardPending: null
-      },
-
-      // NEW: safe defaults
-      activeFlavorId: "classic",
-      pricePerBottle: BASE_MARKET_PRICE
+      }
     };
   }
 
@@ -483,6 +443,23 @@
     } catch (e) {
       console.error("Failed to save", e);
     }
+
+  function hardResetGame() {
+    try {
+      localStorage.removeItem("coke_tycoon_idle_save");
+      localStorage.removeItem("coke_tycoon_idle_last_tick");
+    } catch (e) {
+      console.error("Failed to clear save", e);
+    }
+
+    state = defaultState();
+    saveGame();
+    updateUI();
+    pushLog(
+      "New game started. Previous save data was wiped from this browser.",
+      "good"
+    );
+  }
   }
 
   function loadGame() {
@@ -552,17 +529,6 @@
         };
       });
       state.flavors = newFlavors;
-
-      // Ensure active flavor is valid
-      const validFlavorIds = flavorDefs.map(f => f.id);
-      if (!validFlavorIds.includes(state.activeFlavorId)) {
-        state.activeFlavorId = "classic";
-      }
-
-      // Ensure pricePerBottle is sane
-      if (typeof state.pricePerBottle !== "number" || !isFinite(state.pricePerBottle)) {
-        state.pricePerBottle = BASE_MARKET_PRICE;
-      }
     } catch (e) {
       console.error("Failed to load game, resetting", e);
       state = defaultState();
@@ -639,7 +605,31 @@
     }
   }
 
-  // --- Production & sales ---
+  
+  // --- Production lines helper (for dedicated lines UI) ---
+  function ensureLines() {
+    if (!state.meta) {
+      state.meta = { lines: 1, warehouses: 1 };
+    }
+    if (!Array.isArray(state.lines) || state.lines.length === 0) {
+      const count = Math.max(1, state.meta.lines || 1);
+      const perLineCap = Math.max(
+        1,
+        Math.floor((state.capacityPerHour || BASE_CAPACITY_PER_LINE * count) / count)
+      );
+      const lines = [];
+      for (let i = 0; i < count; i++) {
+        lines.push({
+          id: i + 1,
+          name: "Line " + (i + 1),
+          baseBph: perLineCap,
+          efficiency: 1.0
+        });
+      }
+      state.lines = lines;
+    }
+  }
+// --- Production & sales ---
 
   function getEffectiveCapacityPerHour() {
     const eventMult =
@@ -973,7 +963,10 @@
   // --- Prestige (Brand Legacy) ---
 
   function canPrestige() {
-    return state.brandLegacy >= 1 && (state.stats.revenue || 0) >= 50000;
+    return (
+      state.brandLegacy >= 1 &&
+      (state.stats.revenue || 0) >= 50000
+    );
   }
 
   function doPrestigeReset() {
@@ -989,24 +982,6 @@
     saveGame();
     pushLog(
       "Prestige reset complete. Your Brand Legacy persists and boosts future runs.",
-      "good"
-    );
-  }
-
-  function hardResetGame() {
-    try {
-      // Full wipe of save + offline tick marker
-      localStorage.removeItem("coke_tycoon_idle_save");
-      localStorage.removeItem("coke_tycoon_idle_last_tick");
-    } catch (e) {
-      console.error("Failed to clear save", e);
-    }
-
-    state = defaultState();
-    saveGame();
-    updateUI();
-    pushLog(
-      "New game started. Previous save data was wiped from this browser.",
       "good"
     );
   }
@@ -1056,7 +1031,8 @@
         (state.hour < 10 ? "0" + state.hour : state.hour) + ":00";
     if (capEl)
       capEl.textContent = getEffectiveCapacityPerHour().toLocaleString();
-    if (legacyEl) legacyEl.textContent = (state.brandLegacy || 0).toFixed(2);
+    if (legacyEl)
+      legacyEl.textContent = (state.brandLegacy || 0).toFixed(2);
   }
 
   function updateProductionUI() {
@@ -1093,7 +1069,39 @@
     }
   }
 
-  function updateMarketUI() {
+  
+  function updateLinesUI() {
+    const grid = D("linesGrid");
+    if (!grid) return;
+    ensureLines();
+    grid.innerHTML = "";
+    state.lines.forEach(line => {
+      const eff = typeof line.efficiency === "number" ? line.efficiency : 1;
+      const effPct = Math.round(eff * 100);
+      const effCap = Math.round((line.baseBph || 0) * eff);
+
+      const card = document.createElement("div");
+      card.className = "chip";
+
+      const main = document.createElement("div");
+      main.className = "chip-main";
+      const nameSpan = document.createElement("strong");
+      nameSpan.textContent = line.name || ("Line " + line.id);
+      const capSpan = document.createElement("span");
+      capSpan.textContent = effCap.toLocaleString() + " bph";
+      main.appendChild(nameSpan);
+      main.appendChild(capSpan);
+
+      const sub = document.createElement("div");
+      sub.className = "chip-sub";
+      sub.textContent = "Base " + (line.baseBph || 0).toLocaleString() + " • Eff. " + effPct + "%";
+
+      card.appendChild(main);
+      card.appendChild(sub);
+      grid.appendChild(card);
+    });
+  }
+function updateMarketUI() {
     const flavor = state.flavors[state.activeFlavorId];
     const def = flavorDefs.find(f => f.id === state.activeFlavorId);
     const flavorNameEl = D("activeFlavorName");
@@ -1112,11 +1120,7 @@
 
     const priceDisplay = D("priceDisplay");
     if (priceDisplay) {
-      const price =
-        typeof state.pricePerBottle === "number"
-          ? state.pricePerBottle
-          : BASE_MARKET_PRICE;
-      priceDisplay.textContent = formatMoney(price);
+      priceDisplay.textContent = formatMoney(state.pricePerBottle);
     }
 
     const demandBar = D("demandBar");
@@ -1157,7 +1161,6 @@
     if (channelsGrid || rivalsGrid) {
       const channelDemand = computeChannelDemand();
       const shares = computeMarketShares(channelDemand);
-      const rivals = getRivalArchetypes();
 
       if (channelsGrid) {
         channelsGrid.innerHTML = "";
@@ -1187,7 +1190,7 @@
 
       if (rivalsGrid) {
         rivalsGrid.innerHTML = "";
-        rivals.forEach(r => {
+        rivalDefs.forEach(r => {
           const box = document.createElement("div");
           box.className = "chip";
           const main = document.createElement("div");
@@ -1200,20 +1203,18 @@
             "</span>";
           const sub = document.createElement("div");
           sub.className = "chip-sub";
-          const shareLines = channels
-            .map(ch => {
-              const info = shares[ch];
-              if (!info) return "";
-              const rivalShare = info.rivalShares[r.id] || 0;
-              return (
-                ch.charAt(0).toUpperCase() +
-                ch.slice(1) +
-                ": " +
-                Math.round(rivalShare * 100) +
-                "%"
-              );
-            })
-            .filter(Boolean);
+          const shareLines = channels.map(ch => {
+            const info = shares[ch];
+            if (!info) return "";
+            const rivalShare = info.rivalShares[r.id] || 0;
+            return (
+              ch.charAt(0).toUpperCase() +
+              ch.slice(1) +
+              ": " +
+              Math.round(rivalShare * 100) +
+              "%"
+            );
+          });
           sub.textContent = shareLines.join(" • ");
           box.appendChild(main);
           box.appendChild(sub);
@@ -1224,11 +1225,15 @@
   }
 
   function updatePrestigeUI() {
-    // Detailed prestige UI handled by prestige_ext.js
+    const pointsSummary = D("prestigePointsSummary");
+    if (!pointsSummary) return;
+    pointsSummary.textContent =
+      (state.brandLegacy || 0).toFixed(2) + " available";
   }
 
   function renderFlavors() {
     // currently flavor list is summarized via active flavor UI
+    // could expand to full list in future
   }
 
   function renderUpgrades() {
@@ -1461,6 +1466,7 @@
   function updateUI() {
     updateTopbar();
     updateProductionUI();
+    updateLinesUI();
     updateMarketUI();
     updatePrestigeUI();
     renderFlavors();
@@ -1469,11 +1475,7 @@
     renderAdventureUI();
 
     // Let extension modules refresh their UI
-    if (
-      window.CokeExt &&
-      Array.isArray(window.CokeExt.handlers) &&
-      window.CokeExt.handlers.length
-    ) {
+    if (window.CokeExt && Array.isArray(window.CokeExt.handlers) && window.CokeExt.handlers.length) {
       const api = buildExtensionApi();
       callExtensions("onUpdateUI", api);
     }
@@ -1489,7 +1491,10 @@
         if (!btn) return;
         const kind = btn.getAttribute("data-buy");
         const amount = parseInt(btn.getAttribute("data-amount"), 10) || 0;
-        if (!["preforms", "labels", "packaging"].includes(kind) || amount <= 0) {
+        if (
+          !["preforms", "labels", "packaging"].includes(kind) ||
+          amount <= 0
+        ) {
           return;
         }
         const costPer = SUPPLY_COST[kind];
@@ -1605,11 +1610,17 @@
         btn.addEventListener("click", () => {
           logFilters.forEach(b => b.classList.remove("chip--active"));
           btn.classList.add("chip--active");
+          const filter = btn.getAttribute("data-log-filter");
           const list = D("logList");
           if (!list) return;
-          // Currently all log items always visible; filter hooks kept for future
           Array.from(list.children).forEach(item => {
-            item.style.display = "";
+            if (filter === "all") {
+              item.style.display = "";
+            } else if (filter === "ops") {
+              item.style.display = "";
+            } else {
+              item.style.display = "";
+            }
           });
         });
       });
@@ -1631,11 +1642,7 @@
     bindEvents();
 
     // Let extension modules initialize and bind their own events
-    if (
-      window.CokeExt &&
-      Array.isArray(window.CokeExt.handlers) &&
-      window.CokeExt.handlers.length
-    ) {
+    if (window.CokeExt && Array.isArray(window.CokeExt.handlers) && window.CokeExt.handlers.length) {
       const api = buildExtensionApi();
       callExtensions("onInit", api);
       callExtensions("onBindEvents", api);

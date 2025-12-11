@@ -824,8 +824,7 @@ input[type="range"]::-moz-range-thumb {
   }
 }
 
-/* Prestige layout tweak + hard reset button */
-
+/* Prestige layout tweaks */
 .prestige-header {
   display: flex;
   align-items: center;

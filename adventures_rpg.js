@@ -1,6 +1,4 @@
 (function () {
-  'use strict';
-
   if (!window.CokeExt || typeof window.CokeExt.register !== "function") return;
 
   const extraAdventures = [
@@ -32,10 +30,7 @@
 
   const handler = {
     onInit(api) {
-      if (!api || !api.constants) return;
-      const adventureDefs = api.constants.adventureDefs;
-      if (!Array.isArray(adventureDefs)) return;
-
+      const { adventureDefs } = api.constants;
       extraAdventures.forEach(def => {
         if (!adventureDefs.some(a => a.id === def.id)) {
           adventureDefs.push(def);
@@ -44,34 +39,23 @@
     },
 
     onBindEvents(api) {
-      if (!api || !api.D) return;
       const listEl = api.D("extraAdventuresList");
       if (!listEl) return;
 
       listEl.addEventListener("click", e => {
         const btn = e.target.closest("button[data-adv-id]");
-        if (!btn || !api.actions || typeof api.actions.startAdventure !== "function") {
-          return;
-        }
+        if (!btn) return;
         const id = btn.getAttribute("data-adv-id");
         api.actions.startAdventure(id);
       });
     },
 
     onUpdateUI(api) {
-      if (!api || !api.D || !api.getState) return;
-
       const listEl = api.D("extraAdventuresList");
       if (!listEl) return;
 
       const state = api.getState();
-      if (!state || !state.inv) {
-        listEl.innerHTML = "";
-        return;
-      }
-
-      const advActive = !!(state.adventure && state.adventure.activeId);
-      const bottlesInStock = Number(state.inv.bottles || 0);
+      const advActive = !!state.adventure.activeId;
 
       listEl.innerHTML = "";
 
@@ -81,32 +65,27 @@
 
         const main = document.createElement("div");
         main.className = "chip-main";
-
         const title = document.createElement("span");
         title.textContent = def.name;
-
         const req = document.createElement("span");
         req.textContent =
           def.minBottlesRequired + " bottles • " + def.durationHours + "h";
-
         main.appendChild(title);
         main.appendChild(req);
 
         const sub = document.createElement("div");
         sub.className = "chip-sub";
-
         const desc = document.createElement("span");
         desc.textContent = def.desc;
-
         const actions = document.createElement("div");
         const btn = document.createElement("button");
         btn.type = "button";
         btn.className = "btn ghost";
         btn.textContent = advActive ? "Busy" : "Start";
-        btn.disabled = advActive || bottlesInStock < def.minBottlesRequired;
+        btn.disabled = advActive || state.inv.bottles < def.minBottlesRequired;
         btn.setAttribute("data-adv-id", def.id);
-
         actions.appendChild(btn);
+
         sub.appendChild(desc);
         sub.appendChild(actions);
 

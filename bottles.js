@@ -154,15 +154,10 @@
       }
     });
 
-    if (!Array.isArray(state.lines)) {
-      state.lines = [];
-    }
-
+    state.lines = state.lines || [];
     const defaultSkuId = getDefaultSkuId();
 
     state.lines.forEach(function (line) {
-      if (!line) return;
-
       if (!line.currentSkuId) {
         line.currentSkuId = defaultSkuId;
       }
@@ -245,7 +240,7 @@
     if (!hoursDelta || hoursDelta <= 0) return;
 
     state.lines.forEach(function (line, idx) {
-      if (!line || !line.changeover || !line.changeover.inProgress) return;
+      if (!line.changeover || !line.changeover.inProgress) return;
 
       line.changeover.remainingHours -= hoursDelta;
 
@@ -336,7 +331,6 @@
 
     // init / state wiring
     initBottlesState: initBottlesState,
-    getDefaultSkuId: getDefaultSkuId,
 
     // changeovers
     scheduleLineChangeover: scheduleLineChangeover,
