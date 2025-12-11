@@ -1225,7 +1225,7 @@ function updateMarketUI() {
   }
 
   function updatePrestigeUI() {
-    const pointsSummary = D("prestigePointsSummary");
+    const pointsSummary = D("prestigePointsInfo");
     if (!pointsSummary) return;
     pointsSummary.textContent =
       (state.brandLegacy || 0).toFixed(2) + " available";
