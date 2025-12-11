@@ -146,6 +146,10 @@
     }
   ];
 
+  function clamp(min, max, v) {
+    return Math.min(max, Math.max(min, v));
+  }
+
   function getRivalArchetypes() {
     // Prefer rivals seeded by rivals.js in state.ext.rivals.roster
     if (
@@ -236,10 +240,6 @@
   let tickHandle = null;
 
   // --- Helpers ---
-
-  function clamp(min, max, v) {
-    return Math.min(max, Math.max(min, v));
-  }
 
   function D(id) {
     return document.getElementById(id);
@@ -469,7 +469,11 @@
         activeId: null,
         remainingHours: 0,
         rewardPending: null
-      }
+      },
+
+      // NEW: safe defaults
+      activeFlavorId: "classic",
+      pricePerBottle: BASE_MARKET_PRICE
     };
   }
 
@@ -548,6 +552,17 @@
         };
       });
       state.flavors = newFlavors;
+
+      // Ensure active flavor is valid
+      const validFlavorIds = flavorDefs.map(f => f.id);
+      if (!validFlavorIds.includes(state.activeFlavorId)) {
+        state.activeFlavorId = "classic";
+      }
+
+      // Ensure pricePerBottle is sane
+      if (typeof state.pricePerBottle !== "number" || !isFinite(state.pricePerBottle)) {
+        state.pricePerBottle = BASE_MARKET_PRICE;
+      }
     } catch (e) {
       console.error("Failed to load game, resetting", e);
       state = defaultState();
@@ -647,7 +662,7 @@
 
   function autoBuySupplies() {
     const targetPreforms = state.storageCapacity;
-    the targetLabels = state.storageCapacity;
+    const targetLabels = state.storageCapacity;
     const targetPackaging = state.storageCapacity;
 
     const buy = (kind, target, costPer) => {
@@ -1097,7 +1112,11 @@
 
     const priceDisplay = D("priceDisplay");
     if (priceDisplay) {
-      priceDisplay.textContent = formatMoney(state.pricePerBottle);
+      const price =
+        typeof state.pricePerBottle === "number"
+          ? state.pricePerBottle
+          : BASE_MARKET_PRICE;
+      priceDisplay.textContent = formatMoney(price);
     }
 
     const demandBar = D("demandBar");
@@ -1205,14 +1224,11 @@
   }
 
   function updatePrestigeUI() {
-    // Topbar already shows Brand Legacy; detailed prestige points & summary
-    // are handled by prestige_ext.js via the extension system.
-    // This is intentionally left blank to avoid fighting the extension.
+    // Detailed prestige UI handled by prestige_ext.js
   }
 
   function renderFlavors() {
     // currently flavor list is summarized via active flavor UI
-    // could expand to full list in future
   }
 
   function renderUpgrades() {
@@ -1589,11 +1605,10 @@
         btn.addEventListener("click", () => {
           logFilters.forEach(b => b.classList.remove("chip--active"));
           btn.classList.add("chip--active");
-          const filter = btn.getAttribute("data-log-filter");
           const list = D("logList");
           if (!list) return;
+          // Currently all log items always visible; filter hooks kept for future
           Array.from(list.children).forEach(item => {
-            // Current filters are visual only; you can wire types later
             item.style.display = "";
           });
         });
