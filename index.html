@@ -5,7 +5,6 @@
   <title>Coke Tycoon Idle</title>
   <meta name="viewport" content="width=device-width,initial-scale=1.0" />
   <meta name="description" content="Idle factory HTML game: Buy preforms, build bottling lines, win the shelf war." />
-  <!-- favicon (relative, repo root) -->
   <link rel="icon" href="favicon.svg" type="image/svg+xml" />
   <link rel="stylesheet" href="styles.css" />
 </head>
@@ -32,7 +31,6 @@
     </symbol>
   </svg>
 
-  <!-- topbar with navigation so index can open other pages -->
   <div class="page">
     <header class="topbar" aria-label="Game status header">
       <div class="topbar-left">
@@ -42,14 +40,11 @@
           </svg>
           <div>
             <h1 class="brand-title">Coke Tycoon Idle</h1>
-            <p class="brand-subtitle">
-              Run a bottling line, fight for market share, and build a cola empire.
-            </p>
+            <p class="brand-subtitle">Run a bottling line, fight for market share, and build a cola empire.</p>
           </div>
         </div>
       </div>
 
-      <!-- quick navigation -->
       <nav class="topbar-nav" aria-label="Primary">
         <a class="nav-link" href="index.html">Home</a>
         <a class="nav-link" href="production_lines.html">Production Lines</a>
@@ -60,296 +55,125 @@
       <div class="top-stats">
         <div class="pill accent">
           <span class="dot" aria-hidden="true"></span>
-          <div>
-            <div><strong id="cashDisplay">$0</strong></div>
-            <small>Working capital</small>
-          </div>
+          <div><div><strong id="cashDisplay">$0</strong></div><small>Working capital</small></div>
         </div>
-        <div class="pill">
-          <div>
-            <div><strong><span id="dayDisplay">Day 1</span></strong></div>
-            <small>Calendar</small>
-          </div>
-        </div>
-        <div class="pill">
-          <div>
-            <div><strong><span id="timeDisplay">08:00</span></strong></div>
-            <small>Shift time</small>
-          </div>
-        </div>
-        <div class="pill">
-          <div>
-            <div><strong id="capacityPill">0</strong></div>
-            <small>Capacity / hr</small>
-          </div>
-        </div>
-        <div class="pill soft">
-          <div>
-            <div><strong><span id="legacyPointsDisplay">0</span> LP</strong></div>
-            <small>Brand legacy points</small>
-          </div>
-        </div>
+        <div class="pill"><div><div><strong><span id="dayDisplay">Day 1</span></strong></div><small>Calendar</small></div></div>
+        <div class="pill"><div><div><strong><span id="timeDisplay">08:00</span></strong></div><small>Shift time</small></div></div>
+        <div class="pill"><div><div><strong id="capacityPill">0</strong></div><small>Capacity / hr</small></div></div>
+        <div class="pill soft"><div><div><strong><span id="legacyPointsDisplay">0</span> LP</strong></div><small>Brand legacy points</small></div></div>
       </div>
     </header>
 
     <main class="layout" aria-label="Game layout">
-      <!-- LEFT COLUMN -->
       <div class="column">
         <!-- Production & Inventory -->
         <section class="card" aria-labelledby="productionTitle">
           <div class="card-header">
             <div class="card-title" id="productionTitle">Production & Inventory</div>
-            <div class="card-pill">
-              <svg class="icon" aria-hidden="true"><use href="#icon-factory"></use></svg>
-              <span>Lines & Warehouse</span>
-            </div>
+            <div class="card-pill"><svg class="icon" aria-hidden="true"><use href="#icon-factory"></use></svg><span>Lines & Warehouse</span></div>
           </div>
           <div class="card-body">
             <div class="subheading">Production overview</div>
             <div class="stat-row">
-              <div class="stat">
-                <span class="label">Capacity / hr</span>
-                <span class="value" id="capacityDisplay">0</span>
-              </div>
-              <div class="stat">
-                <span class="label">Last hour produced</span>
-                <span class="value" id="lastProducedDisplay">0</span>
-              </div>
-              <div class="stat">
-                <span class="label">Lifetime produced</span>
-                <span class="value" id="lifetimeProducedDisplay">0</span>
-              </div>
+              <div class="stat"><span class="label">Capacity / hr</span><span class="value" id="capacityDisplay">0</span></div>
+              <div class="stat"><span class="label">Last hour produced</span><span class="value" id="lastProducedDisplay">0</span></div>
+              <div class="stat"><span class="label">Lifetime produced</span><span class="value" id="lifetimeProducedDisplay">0</span></div>
             </div>
 
             <div class="subheading">Inventory</div>
             <div class="inventory-grid" id="inventoryGrid">
               <div class="chip">
-                <div class="chip-main">
-                  <strong>Preforms</strong>
-                  <span id="invPreforms">0</span>
-                </div>
-                <div class="chip-sub">
-                  <span>Raw PET for bottles.</span>
-                  <div>
-                    <button class="btn primary" data-buy="preforms" data-amount="50" type="button">+50</button>
-                    <button class="btn ghost" data-buy="preforms" data-amount="200" type="button">+200</button>
-                  </div>
-                </div>
+                <div class="chip-main"><strong>Preforms</strong><span id="invPreforms">0</span></div>
+                <div class="chip-sub"><span>Raw PET for bottles.</span><div><button class="btn primary" data-buy="preforms" data-amount="50" type="button">+50</button><button class="btn ghost" data-buy="preforms" data-amount="200" type="button">+200</button></div></div>
               </div>
-
               <div class="chip">
-                <div class="chip-main">
-                  <strong>Labels</strong>
-                  <span id="invLabels">0</span>
-                </div>
-                <div class="chip-sub">
-                  <span>Brand sleeves.</span>
-                  <div>
-                    <button class="btn primary" data-buy="labels" data-amount="50" type="button">+50</button>
-                    <button class="btn ghost" data-buy="labels" data-amount="200" type="button">+200</button>
-                  </div>
-                </div>
+                <div class="chip-main"><strong>Labels</strong><span id="invLabels">0</span></div>
+                <div class="chip-sub"><span>Brand sleeves.</span><div><button class="btn primary" data-buy="labels" data-amount="50" type="button">+50</button><button class="btn ghost" data-buy="labels" data-amount="200" type="button">+200</button></div></div>
               </div>
-
               <div class="chip">
-                <div class="chip-main">
-                  <strong>Packaging</strong>
-                  <span id="invPackaging">0</span>
-                </div>
-                <div class="chip-sub">
-                  <span>Trays & shrink-wrap.</span>
-                  <div>
-                    <button class="btn primary" data-buy="packaging" data-amount="50" type="button">+50</button>
-                    <button class="btn ghost" data-buy="packaging" data-amount="200" type="button">+200</button>
-                  </div>
-                </div>
+                <div class="chip-main"><strong>Packaging</strong><span id="invPackaging">0</span></div>
+                <div class="chip-sub"><span>Trays & shrink-wrap.</span><div><button class="btn primary" data-buy="packaging" data-amount="50" type="button">+50</button><button class="btn ghost" data-buy="packaging" data-amount="200" type="button">+200</button></div></div>
               </div>
-
               <div class="chip">
-                <div class="chip-main">
-                  <strong>Bottles in stock</strong>
-                  <span id="invBottles">0</span>
-                </div>
-                <div class="chip-sub">
-                  <span>Ready to sell.</span>
-                  <div>
-                    <span>Warehouse cap:</span> <strong id="storageCapacityDisplay">0</strong>
-                  </div>
-                </div>
+                <div class="chip-main"><strong>Bottles in stock</strong><span id="invBottles">0</span></div>
+                <div class="chip-sub"><span>Ready to sell.</span><div><span>Warehouse cap:</span> <strong id="storageCapacityDisplay">0</strong></div></div>
               </div>
             </div>
 
             <div class="chip chip--soft">
-              <div class="chip-main">
-                <strong>Auto-supply</strong>
-                <span id="autoBuyStatus">Off</span>
-              </div>
-              <div class="chip-sub">
-                <span>Automatically buys preforms, labels, and packaging when stock is low.</span>
-                <button class="btn" id="autoBuyToggle" type="button">Toggle auto-buy</button>
-              </div>
+              <div class="chip-main"><strong>Auto-supply</strong><span id="autoBuyStatus">Off</span></div>
+              <div class="chip-sub"><span>Automatically buys preforms, labels, and packaging when stock is low.</span><button class="btn" id="autoBuyToggle" type="button">Toggle auto-buy</button></div>
             </div>
           </div>
         </section>
 
         <!-- Pricing & Market -->
         <section class="card" aria-labelledby="pricingTitle">
-          <div class="card-header">
-            <div class="card-title" id="pricingTitle">Pricing & Market</div>
-            <div class="card-pill">
-              <svg class="icon" aria-hidden="true"><use href="#icon-coin"></use></svg>
-              <span>Demand & rivals</span>
-            </div>
-          </div>
+          <div class="card-header"><div class="card-title" id="pricingTitle">Pricing & Market</div><div class="card-pill"><svg class="icon" aria-hidden="true"><use href="#icon-coin"></use></svg><span>Demand & rivals</span></div></div>
           <div class="card-body">
             <div class="subheading">Active flavor</div>
             <div class="flavor-switcher">
               <button class="btn ghost" id="prevFlavorButton" type="button" aria-label="Previous flavor">◀</button>
-              <div class="flavor-info">
-                <div class="flavor-name" id="activeFlavorName">Classic Cola</div>
-                <div class="flavor-meta" id="activeFlavorStats">Lifetime produced: 0 | Lifetime sold: 0</div>
-              </div>
+              <div class="flavor-info"><div class="flavor-name" id="activeFlavorName">Classic Cola</div><div class="flavor-meta" id="activeFlavorStats">Lifetime produced: 0 | Lifetime sold: 0</div></div>
               <button class="btn ghost" id="nextFlavorButton" type="button" aria-label="Next flavor">▶</button>
             </div>
 
             <div class="subheading">Price tuning</div>
             <div class="price-row" aria-label="Price per bottle">
               <button class="btn ghost" id="decreasePriceButton" type="button" aria-label="Decrease price">−</button>
-              <div class="price-display">
-                <span class="label">Price per bottle</span>
-                <strong id="priceDisplay">$2.00</strong>
-              </div>
+              <div class="price-display"><span class="label">Price per bottle</span><strong id="priceDisplay">$2.00</strong></div>
               <button class="btn ghost" id="increasePriceButton" type="button" aria-label="Increase price">+</button>
             </div>
 
-            <div class="market-hints">
-              <div class="hint"><strong>Demand</strong> <span id="demandHint">Normal</span></div>
-              <div class="hint"><strong>Rivals</strong> <span id="rivalHint">Watching your price...</span></div>
-            </div>
+            <div class="market-hints"><div class="hint"><strong>Demand</strong> <span id="demandHint">Normal</span></div><div class="hint"><strong>Rivals</strong> <span id="rivalHint">Watching your price...</span></div></div>
 
             <div class="chart-like" aria-label="Market gauges">
-              <div class="chart-row">
-                <span>Demand level</span>
-                <div class="bar"><div class="bar-fill" id="demandBar"></div></div>
-              </div>
-              <div class="chart-row">
-                <span>Market share</span>
-                <div class="bar"><div class="bar-fill bar-fill--accent" id="shareBar"></div></div>
-              </div>
+              <div class="chart-row"><span>Demand level</span><div class="bar"><div class="bar-fill" id="demandBar"></div></div></div>
+              <div class="chart-row"><span>Market share</span><div class="bar"><div class="bar-fill bar-fill--accent" id="shareBar"></div></div></div>
             </div>
           </div>
         </section>
 
         <!-- Adventures -->
         <section class="card" aria-labelledby="adventuresTitle">
-          <div class="card-header">
-            <div class="card-title" id="adventuresTitle">Adventures & Campaigns</div>
-            <div class="card-pill">
-              <svg class="icon" aria-hidden="true"><use href="#icon-rocket"></use></svg>
-              <span>RPG-style missions</span>
-            </div>
-          </div>
+          <div class="card-header"><div class="card-title" id="adventuresTitle">Adventures & Campaigns</div><div class="card-pill"><svg class="icon" aria-hidden="true"><use href="#icon-rocket"></use></svg><span>RPG-style missions</span></div></div>
           <div class="card-body">
-            <div class="subheading">Active crew</div>
-            <div class="crew-grid" id="crewGrid"></div>
-
-            <div class="subheading">Missions</div>
-            <div class="missions-grid" id="missionsGrid"></div>
-
-            <div class="subheading">Active mission</div>
-            <div class="mission-active" id="activeMissionPanel"></div>
-
-            <div class="mission-footer">
-              <button class="btn" id="adventureClaimButton" type="button" disabled>Claim rewards</button>
-              <small id="adventureStatusText">No mission active.</small>
-            </div>
+            <div class="subheading">Active crew</div><div class="crew-grid" id="crewGrid"></div>
+            <div class="subheading">Missions</div><div class="missions-grid" id="missionsGrid"></div>
+            <div class="subheading">Active mission</div><div class="mission-active" id="activeMissionPanel"></div>
+            <div class="mission-footer"><button class="btn" id="adventureClaimButton" type="button" disabled>Claim rewards</button><small id="adventureStatusText">No mission active.</small></div>
           </div>
         </section>
       </div>
 
       <!-- RIGHT COLUMN -->
       <div class="column">
-        <!-- Rivals & Channels -->
         <section class="card" aria-labelledby="rivalsTitle">
-          <div class="card-header">
-            <div class="card-title" id="rivalsTitle">Rivals & Channels</div>
-            <div class="card-pill">
-              <svg class="icon" aria-hidden="true"><use href="#icon-chart"></use></svg>
-              <span>Territory split</span>
-            </div>
-          </div>
-          <div class="card-body">
-            <div class="subheading">Territory split</div>
-            <div class="channels-grid" id="channelsGrid"></div>
-
-            <div class="subheading">Rival strategies</div>
-            <div class="rivals-grid" id="rivalsGrid"></div>
-          </div>
+          <div class="card-header"><div class="card-title" id="rivalsTitle">Rivals & Channels</div><div class="card-pill"><svg class="icon" aria-hidden="true"><use href="#icon-chart"></use></svg><span>Territory split</span></div></div>
+          <div class="card-body"><div class="subheading">Territory split</div><div class="channels-grid" id="channelsGrid"></div><div class="subheading">Rival strategies</div><div class="rivals-grid" id="rivalsGrid"></div></div>
         </section>
 
-        <!-- Equipment -->
         <section class="card" aria-labelledby="equipmentTitle">
-          <div class="card-header">
-            <div class="card-title" id="equipmentTitle">Equipment & Loadouts</div>
-            <div class="card-pill">
-              <svg class="icon" aria-hidden="true"><use href="#icon-factory"></use></svg>
-              <span>Factory & field gear</span>
-            </div>
-          </div>
+          <div class="card-header"><div class="card-title" id="equipmentTitle">Equipment & Loadouts</div><div class="card-pill"><svg class="icon" aria-hidden="true"><use href="#icon-factory"></use></svg><span>Factory & field gear</span></div></div>
           <div class="card-body">
-            <div class="subheading">Factory line equipment</div>
-            <div class="equipment-grid" id="equipmentList"></div>
-
-            <div class="subheading">Field & promo gear</div>
-            <div class="equipment-grid" id="promoList"></div>
-
-            <div class="chip chip--soft" style="margin-top:0.5rem;">
-              <div class="chip-main"><strong>Equipment summary</strong></div>
-              <div class="chip-sub"><span id="equipmentSummary">No special equipment installed yet.</span></div>
-            </div>
+            <div class="subheading">Factory line equipment</div><div class="equipment-grid" id="equipmentList"></div>
+            <div class="subheading">Field & promo gear</div><div class="equipment-grid" id="promoList"></div>
+            <div class="chip chip--soft" style="margin-top:0.5rem;"><div class="chip-main"><strong>Equipment summary</strong></div><div class="chip-sub"><span id="equipmentSummary">No special equipment installed yet.</span></div></div>
           </div>
         </section>
 
-        <!-- Prestige -->
         <section class="card" aria-labelledby="prestigeTitle">
-          <div class="card-header">
-            <div class="card-title" id="prestigeTitle">Brand Legacy Boardroom</div>
-            <div class="card-pill">
-              <svg class="icon" aria-hidden="true"><use href="#icon-trophy"></use></svg>
-              <span>Prestige tree</span>
-            </div>
-          </div>
+          <div class="card-header"><div class="card-title" id="prestigeTitle">Brand Legacy Boardroom</div><div class="card-pill"><svg class="icon" aria-hidden="true"><use href="#icon-trophy"></use></svg><span>Prestige tree</span></div></div>
           <div class="card-body">
-            <div class="prestige-header">
-              <div>
-                <div class="subheading">Legacy points</div>
-                <div id="prestigePointsSummary">0 available</div>
-              </div>
-              <div class="prestige-actions">
-                <button class="btn danger" id="prestigeResetButton" type="button">Prestige reset</button>
-                <button class="btn ghost" id="hardResetButton" type="button">New game (wipe save)</button>
-              </div>
-            </div>
-
+            <div class="prestige-header"><div><div class="subheading">Legacy points</div><div id="prestigePointsSummary">0 available</div></div>
+            <div class="prestige-actions"><button class="btn danger" id="prestigeResetButton" type="button">Prestige reset</button><button class="btn ghost" id="hardResetButton" type="button">New game (wipe save)</button></div></div>
             <div class="prestige-tree" id="prestigeTree"></div>
           </div>
         </section>
 
-        <!-- Board Feed -->
         <section class="card" aria-labelledby="logTitle">
-          <div class="card-header">
-            <div class="card-title" id="logTitle">Board feed & alerts</div>
-          </div>
-          <div class="card-body">
-            <div class="log-filters" aria-label="Log filters">
-              <button class="chip chip--soft chip--active" data-log-filter="all" type="button">All</button>
-              <button class="chip chip--soft" data-log-filter="ops" type="button">Ops</button>
-              <button class="chip chip--soft" data-log-filter="fin" type="button">Fin</button>
-              <button class="chip chip--soft" data-log-filter="adv" type="button">Adv</button>
-              <button class="chip chip--soft" data-log-filter="rival" type="button">Rival</button>
-            </div>
-            <div class="log-list" id="logList" aria-live="polite"></div>
-          </div>
+          <div class="card-header"><div class="card-title" id="logTitle">Board feed & alerts</div></div>
+          <div class="card-body"><div class="log-filters" aria-label="Log filters"><button class="chip chip--soft chip--active" data-log-filter="all" type="button">All</button><button class="chip chip--soft" data-log-filter="ops" type="button">Ops</button><button class="chip chip--soft" data-log-filter="fin" type="button">Fin</button><button class="chip chip--soft" data-log-filter="adv" type="button">Adv</button><button class="chip chip--soft" data-log-filter="rival" type="button">Rival</button></div><div class="log-list" id="logList" aria-live="polite"></div></div>
         </section>
 
         <div class="footer-note">Progress is saved automatically in your browser.</div>
@@ -357,7 +181,6 @@
     </main>
   </div>
 
-  <!-- scripts: keep filenames and order from repo root; use defer so DOM is available -->
   <script src="bottles.js" defer></script>
   <script src="production.js" defer></script>
   <script src="rivals.js" defer></script>
