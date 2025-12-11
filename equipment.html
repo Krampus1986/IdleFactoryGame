@@ -18,49 +18,87 @@
     </symbol>
   </svg>
 
-  <header class="page-header wrap" aria-label="Equipment header">
-    <div class="wrap-inner">
-      <h1>Equipment</h1>
-      <nav aria-label="Equipment navigation" class="page-nav">
-        <a href="index.html">Home</a>
-        <a href="production_lines.html">Production Lines</a>
-        <a href="upgrades.html">Upgrades</a>
-      </nav>
-    </div>
-  </header>
-
-  <main class="wrap">
-    <section id="equipment-list" class="panel">
-      <h2>Your Equipment</h2>
-      <div id="equipment-items">Loading equipment...</div>
-
-      <div class="equipment-controls">
-        <button id="buy-equipment" class="btn primary" type="button">Buy Equipment</button>
-        <button id="sell-equipment" class="btn ghost" type="button">Sell Equipment</button>
-        <button id="upgrade-equipment" class="btn" type="button">Upgrade Equipment</button>
+  <div class="page">
+    <header class="topbar" aria-label="Equipment header">
+      <div class="topbar-left">
+        <div class="brand">
+          <svg class="brand-logo" aria-hidden="true" width="40" height="40">
+            <use href="#icon-factory"></use>
+          </svg>
+          <div>
+            <h1 class="brand-title">Equipment</h1>
+            <p class="brand-subtitle">Configure factory hardware and field gear.</p>
+          </div>
+        </div>
       </div>
-    </section>
 
-    <section id="equipment-details" class="panel">
-      <h2>Equipment Details</h2>
-      <div id="equipment-detail-pane">Select an item to view details.</div>
-    </section>
-  </main>
+      <nav class="topbar-nav" aria-label="Primary">
+        <a class="nav-link" href="index.html">Home</a>
+        <a class="nav-link" href="production_lines.html">Production Lines</a>
+        <a class="nav-link active" href="equipment.html">Equipment</a>
+        <a class="nav-link" href="upgrades.html">Upgrades</a>
+        <a class="nav-link" href="adventures.html">Adventures</a>
+      </nav>
 
-  <footer class="site-footer wrap">
-    <nav aria-label="Footer navigation">
-      <a href="index.html">Back to Home</a>
-      <a href="production_lines.html">Production Lines</a>
-    </nav>
-    <small>&copy; Idle Factory Game</small>
-  </footer>
+      <div class="top-stats">
+        <div class="pill accent">
+          <span class="dot" aria-hidden="true"></span>
+          <div><div><strong id="cashDisplay">$0</strong></div><small>Working capital</small></div>
+        </div>
+      </div>
+    </header>
 
-  <noscript><p>This page requires JavaScript to function correctly.</p></noscript>
+    <main class="layout" aria-label="Equipment layout">
+      <div class="column">
+        <section class="card" aria-labelledby="equipmentTitle">
+          <div class="card-header">
+            <div class="card-title" id="equipmentTitle">Factory Equipment</div>
+          </div>
+          <div class="card-body">
+            <div class="subheading">Production line equipment</div>
+            <div class="equipment-grid" id="equipmentList"></div>
+          </div>
+        </section>
+      </div>
 
-  <script src="game.js" defer></script>
-  <script src="adventures_rpg.js" defer></script>
-  <script src="equipment.js" defer></script>
-  <script src="prestige_ext.js" defer></script>
+      <div class="column">
+        <section class="card" aria-labelledby="promoTitle">
+          <div class="card-header">
+            <div class="card-title" id="promoTitle">Field & Promo Gear</div>
+          </div>
+          <div class="card-body">
+            <div class="subheading">Marketing equipment</div>
+            <div class="equipment-grid" id="promoList"></div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-header">
+            <div class="card-title">Equipment Summary</div>
+          </div>
+          <div class="card-body">
+            <div class="chip chip--soft">
+              <div class="chip-main"><strong>Investment</strong></div>
+              <div class="chip-sub"><span id="equipmentSummary">No special equipment installed yet.</span></div>
+            </div>
+          </div>
+        </section>
+
+        <div class="footer-note">
+          <a href="index.html">Back to Home</a>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="game_api.js" defer></script>
+  <script src="bottles.js" defer></script>
+  <script src="production.js" defer></script>
   <script src="rivals.js" defer></script>
+  <script src="equipment.js" defer></script>
+  <script src="upgrades.js" defer></script>
+  <script src="adventures_rpg.js" defer></script>
+  <script src="prestige_ext.js" defer></script>
+  <script src="game.js" defer></script>
 </body>
 </html>

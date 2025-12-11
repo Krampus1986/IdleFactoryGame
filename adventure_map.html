@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Adventure Map - Coke Tycoon Idle</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0" />
+  <meta name="description" content="Explore the adventure campaign map." />
+  <link rel="icon" href="favicon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none">
+    <symbol id="icon-rocket" viewBox="0 0 32 32">
+      <path d="M16 2c4.8 0 8 2.5 8 7.5 0 3-1.5 6.5-4.5 10.5l-3.5 4.5-3.5-4.5C9.5 16 8 12.5 8 9.5 8 4.5 11.2 2 16 2zm0 4a3 3 0 1 0 3 3 3 3 0 0 0-3-3zM7 19l3 7-4-3-3 2 2-6z"/>
+    </symbol>
+  </svg>
+
+  <div class="page">
+    <header class="topbar" aria-label="Adventure Map header">
+      <div class="topbar-left">
+        <div class="brand">
+          <svg class="brand-logo" aria-hidden="true" width="40" height="40">
+            <use href="#icon-rocket"></use>
+          </svg>
+          <div>
+            <h1 class="brand-title">Adventure Campaign Map</h1>
+            <p class="brand-subtitle">Navigate missions across the city and beyond.</p>
+          </div>
+        </div>
+      </div>
+
+      <nav class="topbar-nav" aria-label="Primary">
+        <a class="nav-link" href="index.html">Home</a>
+        <a class="nav-link" href="adventures.html">Adventures</a>
+      </nav>
+    </header>
+
+    <main class="layout" aria-label="Adventure Map layout">
+      <div class="column" style="flex: 1">
+        <section class="card" aria-labelledby="mapTitle">
+          <div class="card-header">
+            <div class="card-title" id="mapTitle">Campaign Map</div>
+          </div>
+          <div class="card-body" style="min-height: 400px; display: flex; align-items: center; justify-content: center;">
+            <div style="text-align: center;">
+              <h2 style="color: var(--text-soft); margin-bottom: 1rem;">Coming Soon</h2>
+              <p style="color: var(--text-soft); margin-bottom: 2rem;">
+                The interactive adventure map is under construction.<br />
+                Return to the adventures page to view and start missions.
+              </p>
+              <a href="adventures.html" class="btn primary">Back to Adventures</a>
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="game_api.js" defer></script>
+  <script src="game.js" defer></script>
+</body>
+</html>

@@ -46,10 +46,11 @@
       </div>
 
       <nav class="topbar-nav" aria-label="Primary">
-        <a class="nav-link" href="index.html">Home</a>
+        <a class="nav-link active" href="index.html">Home</a>
         <a class="nav-link" href="production_lines.html">Production Lines</a>
         <a class="nav-link" href="equipment.html">Equipment</a>
         <a class="nav-link" href="upgrades.html">Upgrades</a>
+        <a class="nav-link" href="adventures.html">Adventures</a>
       </nav>
 
       <div class="top-stats">
@@ -181,12 +182,78 @@
     </main>
   </div>
 
+  <!-- Walkthrough Modal -->
+  <div id="walkthroughModal" class="modal" style="display: none;">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2>Welcome to Coke Tycoon Idle!</h2>
+        <button class="modal-close" id="closeWalkthrough" type="button" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <h3>Getting Started</h3>
+        <p>Build your bottling empire from a small operation to a global brand!</p>
+        
+        <div class="walkthrough-step">
+          <strong>1. Buy Materials</strong>
+          <p>Purchase preforms, labels, and packaging to produce bottles.</p>
+        </div>
+        
+        <div class="walkthrough-step">
+          <strong>2. Produce & Sell</strong>
+          <p>Your production lines automatically create bottles every hour. Adjust pricing to maximize profits.</p>
+        </div>
+        
+        <div class="walkthrough-step">
+          <strong>3. Expand</strong>
+          <p>Buy equipment upgrades, add production lines, and complete adventures to grow your business.</p>
+        </div>
+        
+        <div class="walkthrough-step">
+          <strong>4. Compete</strong>
+          <p>Watch rival brands and adjust your strategy to capture market share.</p>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn primary" id="startGameButton" type="button">Start Playing</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="game_api.js" defer></script>
   <script src="bottles.js" defer></script>
   <script src="production.js" defer></script>
   <script src="rivals.js" defer></script>
   <script src="equipment.js" defer></script>
+  <script src="upgrades.js" defer></script>
   <script src="adventures_rpg.js" defer></script>
   <script src="prestige_ext.js" defer></script>
   <script src="game.js" defer></script>
+  <script defer>
+    // Show walkthrough modal on first visit
+    document.addEventListener("DOMContentLoaded", function() {
+      const hasSeenWalkthrough = localStorage.getItem("coke_walkthrough_seen");
+      if (!hasSeenWalkthrough) {
+        const modal = document.getElementById("walkthroughModal");
+        if (modal) {
+          modal.style.display = "flex";
+        }
+      }
+      
+      // Close walkthrough handlers
+      const closeBtn = document.getElementById("closeWalkthrough");
+      const startBtn = document.getElementById("startGameButton");
+      
+      function closeWalkthrough() {
+        const modal = document.getElementById("walkthroughModal");
+        if (modal) {
+          modal.style.display = "none";
+        }
+        localStorage.setItem("coke_walkthrough_seen", "true");
+      }
+      
+      if (closeBtn) closeBtn.addEventListener("click", closeWalkthrough);
+      if (startBtn) startBtn.addEventListener("click", closeWalkthrough);
+    });
+  </script>
 </body>
 </html>
