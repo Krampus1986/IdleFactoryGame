@@ -202,6 +202,64 @@
     }
   ];
 
+  const crewMembers = [
+    {
+      id: "sales",
+      name: "Sales Crew",
+      role: "Frontline deals",
+      trait: "Charismatic closers",
+      members: ["Mara", "Devon"]
+    },
+    {
+      id: "brand",
+      name: "Brand Ambassadors",
+      role: "Sampling & buzz",
+      trait: "Charming storytellers",
+      members: ["Lena", "Farid"]
+    },
+    {
+      id: "logistics",
+      name: "Logistics Specialists",
+      role: "Stock & routing",
+      trait: "Analytical planners",
+      members: ["Priya", "Chen"]
+    },
+    {
+      id: "ops",
+      name: "Field Ops",
+      role: "Event execution",
+      trait: "Calm under pressure",
+      members: ["Vince", "Kora"]
+    }
+  ];
+
+  const weaponLoadouts = [
+    {
+      id: "carbonation_cannon",
+      name: "Carbonation Cannon",
+      slot: "Weaponized fizz",
+      bonus: "+10% mission power",
+      desc: "Pressurized sprayer that dazzles crowds during promos."
+    },
+    {
+      id: "bottle_shield",
+      name: "Bottle Shield Rig",
+      slot: "Defensive gear",
+      bonus: "-8% risk on risky missions",
+      desc: "Reinforced crate shields keep the crew safe when rivals push back."
+    },
+    {
+      id: "merch_launcher",
+      name: "Merch Launcher",
+      slot: "Ranged gear",
+      bonus: "+12% brand hype rewards",
+      desc: "Launches swag packs and mini bottles to hype up stadium crowds."
+    }
+  ];
+
+  window.CokeGame.crewMembers = crewMembers;
+  window.CokeGame.weaponLoadouts = weaponLoadouts;
+
   let state;
   let tickHandle = null;
 
@@ -1150,7 +1208,11 @@ function updateMarketUI() {
 
     const priceDisplay = D("priceDisplay");
     if (priceDisplay) {
-      priceDisplay.textContent = formatMoney(state.pricePerBottle);
+      priceDisplay.textContent = formatMoney(
+        typeof state.pricePerBottle === "number"
+          ? state.pricePerBottle
+          : BASE_MARKET_PRICE
+      );
     }
 
     const demandBar = D("demandBar");
@@ -1389,34 +1451,19 @@ function updateMarketUI() {
     const activePanel = D("activeMissionPanel");
     const statusText = D("adventureStatusText");
     const claimBtn = D("adventureClaimButton");
+    const weaponGrid = D("weaponGrid");
 
     if (!crewGrid || !missionsGrid || !activePanel || !statusText || !claimBtn)
       return;
 
     crewGrid.innerHTML = "";
-    const crew = [
-      {
-        id: "sales",
-        name: "Sales Rep",
-        role: "Frontline deals",
-        trait: "Charismatic"
-      },
-      {
-        id: "brand",
-        name: "Brand Ambassador",
-        role: "Sampling & buzz",
-        trait: "Charming"
-      },
-      {
-        id: "logistics",
-        name: "Logistics Specialist",
-        role: "Stock & routing",
-        trait: "Analytical"
-      }
-    ];
-    crew.forEach(c => {
+    crewMembers.forEach(c => {
       const chip = document.createElement("div");
       chip.className = "chip";
+      const members =
+        c.members && c.members.length
+          ? "<span>Members: " + c.members.join(", ") + "</span>"
+          : "";
       chip.innerHTML =
         '<div class="chip-main"><strong>' +
         c.name +
@@ -1425,9 +1472,31 @@ function updateMarketUI() {
         "</span></div>" +
         '<div class="chip-sub"><span>Trait: ' +
         c.trait +
-        "</span></div>";
+        "</span>" +
+        members +
+        "</div>";
       crewGrid.appendChild(chip);
     });
+
+    if (weaponGrid) {
+      weaponGrid.innerHTML = "";
+      weaponLoadouts.forEach(w => {
+        const chip = document.createElement("div");
+        chip.className = "chip";
+        chip.innerHTML =
+          '<div class="chip-main"><strong>' +
+          w.name +
+          "</strong><span>" +
+          w.slot +
+          "</span></div>" +
+          '<div class="chip-sub"><span>' +
+          w.bonus +
+          "</span>" +
+          (w.desc ? "<span>" + w.desc + "</span>" : "") +
+          "</div>";
+        weaponGrid.appendChild(chip);
+      });
+    }
 
     missionsGrid.innerHTML = "";
     adventureDefs.forEach(def => {
